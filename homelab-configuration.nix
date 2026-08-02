@@ -15,6 +15,7 @@ in {
     ./watchdog.nix
   ];
 
+  # done
   nix = {
     settings.auto-optimise-store = true;
     settings.trusted-users = [ hostname ];
@@ -53,7 +54,7 @@ in {
   services.getty.autologinUser = "homelab";
 
   # hyprland
-  programs.hyprland.enable = true;
+  # programs.hyprland.enable = true;
 
   #services.xserver.enable = true;
   # Enable the GNOME Desktop Environment.
