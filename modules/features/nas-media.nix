@@ -1,21 +1,38 @@
 {
-  flake.modules.nixos.nas-media = { pkgs, config, ... }: {
-    users.groups.nas-media = { };
+  flake.modules.nixos.nas-media =
+    { config, lib, ... }:
+    let
+      cfg = config.mediaMount;
+    in
+    {
+      options.mediaMount = {
+        group = lib.mkOption {
+          type = lib.types.str;
+          default = "nas-media";
+          description = "Group with access to the Mars NAS. Add this group to a user to grant it access.";
+        };
+        mountPoint = lib.mkOption {
+          type = lib.types.str;
+          default = "/mnt/media";
+        };
+      };
 
-    # mount nas for nas-media group
-    fileSystems."/mnt/media" = {
-      device = "//mars/media";
-      fsType = "cifs";
-      options = [
-        "credentials=/etc/nixos/mars-secrets"
-        "nofail"
-        "noauto"
-        "x-systemd.automount"
+      config = {
+        users.groups.${cfg.group} = { };
 
-        "gid=nas-media"
-        "file_mode=0664"
-        "dir_mode=0775"
-      ];
+        fileSystems.${cfg.mountPoint} = {
+          device = "//mars/media";
+          fsType = "cifs";
+          options = [
+            "credentials=/etc/nixos/mars-secrets"
+            "nofail"
+            "noauto"
+            "x-systemd.automount"
+            "gid=${cfg.group}"
+            "file_mode=0664"
+            "dir_mode=0775"
+          ];
+        };
+      };
     };
-  };
 }
