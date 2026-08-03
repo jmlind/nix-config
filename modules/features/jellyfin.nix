@@ -1,11 +1,18 @@
-{ pkgs, ... }: {
-  users.users.jellyfin.extraGroups = [ "nas-media" ];
+{
+  flake.modules.nixos.jellyfin = { pkgs, config, ... }: {
+    imports = [ config.flake.modules.nixos.nas-media ];
 
-  services.jellyfin = {
-    enable = true;
-    openFirewall = true;
+    users.users.jellyfin.extraGroups = [ config.mediaMount.group ];
+    
+    services.jellyfin = {
+      enable = true;
+      openFirewall = true;
+    };
+
+    environment.systemPackages = [
+      pkgs.jellyfin
+      pkgs.jellyfin-web
+      pkgs.jellyfin-ffmpeg
+    ];
   };
-
-  environment.systemPackages =
-    [ pkgs.jellyfin pkgs.jellyfin-web pkgs.jellyfin-ffmpeg ];
 }
