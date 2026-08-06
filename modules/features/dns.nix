@@ -1,15 +1,15 @@
-{
- flake.modules.nixos.dns-server = { lib, self, ... }:
-  let
-    hostIPs = {
-      homelab    = "192.168.1.168";
-      telemachus = "192.168.1.169";
-    };
-    allRecords = lib.foldl'
-      (acc: node: acc // node.config.homelab.dns.records)
-      { }
-      (lib.attrValues self.nixosConfigurations);
-  in {
+{ self, lib, ... }:
+let
+  hostIPs = {
+    homelab    = "192.168.1.168";
+    telemachus = "192.168.1.169";
+  };
+  allRecords = lib.foldl'
+    (acc: node: acc // node.config.homelab.dns.records)
+    { }
+    (lib.attrValues self.nixosConfigurations);
+in {
+  flake.modules.nixos.dns-server = {
     networking.firewall.allowedUDPPorts = [ 53 ];
     networking.firewall.allowedTCPPorts = [ 53 ];
     services.dnsmasq = {

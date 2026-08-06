@@ -1,5 +1,5 @@
 {
-  flake.modules.nixos.homelab =
+  flake.modules.nixos.homelabHardware =
     {
       config,
       lib,

@@ -1,5 +1,5 @@
 {
-  flake.modules.nixos.nut = {
+  flake.modules.nixos.nut-client = {
     power.ups = {
       enable = true;
       mode = "netclient";

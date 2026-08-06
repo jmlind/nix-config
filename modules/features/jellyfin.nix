@@ -1,6 +1,7 @@
+{ self, ... }:
 {
   flake.modules.nixos.jellyfin = { pkgs, config, ... }: {
-    imports = [ config.flake.modules.nixos.nas-media ];
+    imports = [ self.modules.nixos.nas-media ];
 
     users.users.jellyfin.extraGroups = [ config.mediaMount.group ];
 

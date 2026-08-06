@@ -2,7 +2,7 @@
 # and may be overwritten by future invocations.  Please make changes
 # to /etc/nixos/configuration.nix instead.
 {
-  flake.nixos.modules.telemachusHardware =
+  flake.modules.nixos.telemachusHardware =
     {
       config,
       lib,
