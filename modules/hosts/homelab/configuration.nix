@@ -3,7 +3,8 @@
   flake.nixosModules.homelabConfiguration = { pkgs, lib, ... }: {
     # import any other modules from here
     imports = [
-      self.nixosModules.myMachineHardware
+      self.modules.nixos.homelabHardware
+      self.modules.nixos.arm
     ];
 
     nix.settings.experimental-features = [
@@ -69,10 +70,6 @@
       stow # to unpack dotfiles
       starship # tryhard prompt
       firefox
-      libdvdread # dvd libs
-      docker
-      lsscsi # dvd drive
-      cifs-utils # mounting smb share
       sops
       age
       kitty
@@ -112,17 +109,6 @@
       };
     };
 
-    # Docker for containers
-    virtualisation = {
-      docker = {
-        enable = true;
-        autoPrune = {
-          enable = true;
-          dates = "weekly";
-        };
-      };
-      oci-containers.backend = "docker";
-    };
     # This value determines the NixOS release from which the default
     # settings for stateful data, like file locations and database versions
     # on your system were taken. It‘s perfectly fine and recommended to leave

@@ -1,6 +1,11 @@
 {
   flake.modules.nixos.nas-media =
-    { config, lib, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.mediaMount;
     in
@@ -18,6 +23,8 @@
       };
 
       config = {
+        environment.systemPackages = [ pkgs.cifs-utils ];
+
         users.groups.${cfg.group} = { };
 
         fileSystems.${cfg.mountPoint} = {

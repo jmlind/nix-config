@@ -3,7 +3,7 @@
     imports = [ config.flake.modules.nixos.nas-media ];
 
     users.users.jellyfin.extraGroups = [ config.mediaMount.group ];
-    
+
     services.jellyfin = {
       enable = true;
       openFirewall = true;

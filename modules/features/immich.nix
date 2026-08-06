@@ -1,5 +1,5 @@
 {
-  flake.modules.nixos.module-name = { pkgs, config, ... }: {
+  flake.modules.nixos.immich = {
     services.immich = {
       enable = true;
       port = 2283;
