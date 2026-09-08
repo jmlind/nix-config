@@ -5,6 +5,7 @@
     imports = [
       self.modules.nixos.homelabHardware
       self.modules.nixos.arm
+      self.modules.nixos.caddy
     ];
 
     nix.settings.experimental-features = [
