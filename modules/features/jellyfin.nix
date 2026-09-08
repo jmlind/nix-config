@@ -1,10 +1,7 @@
 { self, ... }:
 {
   flake.modules.nixos.jellyfin = { pkgs, config, ... }: {
-    imports = [
-      self.modules.nixos.nas-media
-      self.modules.nixos.healthEndpoints
-    ];
+    imports = [ self.modules.nixos.nas-media ];
 
     users.users.jellyfin.extraGroups = [ config.mediaMount.group ];
 
@@ -19,6 +16,8 @@
       pkgs.jellyfin-ffmpeg
     ];
 
+    # Requires `statusPage` (declares this option) somewhere in the host's
+    # import closure — see modules/features/health-endpoints.nix.
     healthChecks = [
       {
         name = "jellyfin";

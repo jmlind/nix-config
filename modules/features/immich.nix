@@ -1,8 +1,5 @@
-{ self, ... }:
 {
   flake.modules.nixos.immich = {
-    imports = [ self.modules.nixos.healthEndpoints ];
-
     services.immich = {
       enable = true;
       port = 2283;
@@ -18,6 +15,8 @@
 
     # NOTE: verify this path against the immich version actually deployed —
     # just checking for a 200 here rather than asserting a response body.
+    # Requires `statusPage` (declares this option) somewhere in the host's
+    # import closure — see modules/features/health-endpoints.nix.
     healthChecks = [
       {
         name = "immich";

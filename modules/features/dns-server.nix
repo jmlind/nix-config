@@ -10,8 +10,6 @@ let
     (lib.attrValues self.nixosConfigurations);
 in {
   flake.modules.nixos.dns-server = {
-    imports = [ self.modules.nixos.healthEndpoints ];
-
     networking.firewall.allowedUDPPorts = [ 53 ];
     networking.firewall.allowedTCPPorts = [ 53 ];
     services.dnsmasq = {
@@ -25,7 +23,9 @@ in {
     };
 
     # TCP check, not HTTP: dnsmasq doesn't speak HTTP, but a successful TCP
-    # connect on 53 is a reasonable "is it up" signal.
+    # connect on 53 is a reasonable "is it up" signal. Requires `statusPage`
+    # (declares this option) somewhere in the host's import closure — see
+    # modules/features/health-endpoints.nix.
     healthChecks = [
       {
         name = "dns-server";

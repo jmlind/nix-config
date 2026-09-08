@@ -143,17 +143,32 @@ so it fits a git-checked-in flake:
 ```nix
 # modules/features/jellyfin.nix
 flake.modules.nixos.jellyfin = { ... }: {
-  imports = [ self.modules.nixos.healthEndpoints ];  # pulls in the option
   services.jellyfin.enable = true;
+  # option declared by `statusPage`, not here — see note below
   healthChecks = [{ name = "jellyfin"; url = "http://localhost:8096/health"; }];
 };
 ```
 
-A feature that registers a check imports `healthEndpoints` itself (imports
-dedupe, so this is free) rather than relying on the host to remember to —
-same self-sufficiency as any other feature. A host gets a dashboard by
-importing `statusPage`; it will show exactly the checks its *other* imported
-features registered, with zero host-specific wiring:
+**Important asymmetry, learned the hard way:** only `status-page.nix` is
+allowed to `imports = [ self.modules.nixos.healthEndpoints ]` (the module
+that does `options.healthChecks = lib.mkOption { ... };`). A feature that
+*sets* `healthChecks` should NOT also import `healthEndpoints` itself —
+unlike `nas-media`, which only one feature ever imports, `healthEndpoints`
+gets pulled onto the same host by several unrelated features (jellyfin,
+immich, dns-server, ...), and NixOS does not dedupe repeated *option
+declarations* the way it dedupes plain config — importing the same
+`mkOption`-containing module from more than one feature on the same host
+fails with "already declared". So the option is declared exactly once (in
+`statusPage`), and every other feature just sets the config value directly
+— that's plain NixOS behavior (any module in the closure can set a value
+for an option declared elsewhere in that closure). The one consequence:
+`statusPage` must be somewhere in the host's import list for `healthChecks`
+to be a valid option at all — a host importing jellyfin without statusPage
+will fail to evaluate.
+
+A host gets a dashboard by importing `statusPage`; it will show exactly the
+checks its *other* imported features registered, with zero further
+host-specific wiring:
 
 ```nix
 imports = with self.modules.nixos; [ jellyfin immich nut-client statusPage ];
