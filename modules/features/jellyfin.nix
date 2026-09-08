@@ -1,7 +1,10 @@
 { self, ... }:
 {
   flake.modules.nixos.jellyfin = { pkgs, config, ... }: {
-    imports = [ self.modules.nixos.nas-media ];
+    imports = [
+      self.modules.nixos.nas-media
+      self.modules.nixos.healthEndpoints
+    ];
 
     users.users.jellyfin.extraGroups = [ config.mediaMount.group ];
 
@@ -14,6 +17,13 @@
       pkgs.jellyfin
       pkgs.jellyfin-web
       pkgs.jellyfin-ffmpeg
+    ];
+
+    healthChecks = [
+      {
+        name = "jellyfin";
+        url = "http://localhost:8096/health";
+      }
     ];
   };
 }

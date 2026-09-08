@@ -129,6 +129,44 @@ Run everything with `nix flake check`, or one check at a time with
   thus `checks`) is available — add more systems here if a feature (e.g.
   `arm.nix`) needs testing on another architecture.
 
+## Live health: self-registering status page
+
+VM checks answer "does this evaluate and boot"; they say nothing about a
+*running* host. For that, features self-register a health check into a
+shared `healthChecks` option (`modules/features/health-endpoints.nix`), and
+`modules/features/status-page.nix` turns whatever a host's imported
+features registered into a [gatus](https://github.com/TwiN/gatus) status
+page — chosen over something like Uptime Kuma because gatus is configured
+entirely from Nix (a plain endpoint list) rather than through its own UI/DB,
+so it fits a git-checked-in flake:
+
+```nix
+# modules/features/jellyfin.nix
+flake.modules.nixos.jellyfin = { ... }: {
+  imports = [ self.modules.nixos.healthEndpoints ];  # pulls in the option
+  services.jellyfin.enable = true;
+  healthChecks = [{ name = "jellyfin"; url = "http://localhost:8096/health"; }];
+};
+```
+
+A feature that registers a check imports `healthEndpoints` itself (imports
+dedupe, so this is free) rather than relying on the host to remember to —
+same self-sufficiency as any other feature. A host gets a dashboard by
+importing `statusPage`; it will show exactly the checks its *other* imported
+features registered, with zero host-specific wiring:
+
+```nix
+imports = with self.modules.nixos; [ jellyfin immich nut-client statusPage ];
+```
+
+`healthChecks` entries are gatus endpoints — `url` can be `http://...` (HTTP
+check) or `tcp://host:port` (plain connectivity check, e.g. for a
+non-HTTP service like `dns-server`'s dnsmasq). `statusPage` currently just
+opens gatus's port (8080) on the firewall; putting it behind `caddy` for
+real exposure is a follow-up, not done yet. Not every feature has a
+meaningful health check to register (e.g. `nut-client` only watches a UPS
+elsewhere on the network) — that's fine, it's opt-in per feature.
+
 ## Notes
 
 - `old/` holds the pre-rewrite, non-dendritic config for reference during

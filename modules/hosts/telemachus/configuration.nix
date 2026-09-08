@@ -8,6 +8,7 @@
       nut-client
       diskoGptLvm
       nix-settings
+      statusPage
     ];
 
     diskoConfig.primaryDisk = "/dev/nvme0n1";
