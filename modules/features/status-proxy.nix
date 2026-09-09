@@ -14,9 +14,7 @@
     {
       options.homelab.baseDomain = lib.mkOption {
         type = lib.types.str;
-        # TODO: set this to your real domain (the Porkbun zone caddy.nix's
-        # acme_dns is configured against) before deploying.
-        default = "CHANGE-ME.example.com";
+        default = "lind.estate";
         description = "Base domain status pages are served under, as status.<hostname>.<baseDomain>.";
       };
 

@@ -193,13 +193,11 @@ hostname resolves with valid TLS while access is still gated inside Caddy
 imports `caddy`, `statusPage`, and `statusProxy` together, and needs
 `networking.hostName` set (used to build the vhost — see `telemachus`).
 
-Two things to fix before this actually works, both flagged in-place:
-
-- `homelab.baseDomain` (declared in `status-proxy.nix`) defaults to a
-  `CHANGE-ME` placeholder — set it to your real domain before deploying.
-- `caddy.nix`'s plugin build has `hash = "";` — a genuine placeholder nixpkgs
-  expects you to fill in from the real build error (`nix build` will report
-  the correct hash) before caddy can build for *any* host, not just this one.
+`homelab.baseDomain` (declared in `status-proxy.nix`) defaults to
+`lind.estate`. One thing still to fix before this actually works:
+`caddy.nix`'s plugin build has `hash = "";` — a genuine placeholder nixpkgs
+expects you to fill in from the real build error (`nix build` will report
+the correct hash) before caddy can build for *any* host, not just this one.
 
 ## Notes
 
