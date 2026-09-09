@@ -136,78 +136,82 @@ VM checks answer "does this evaluate and boot"; they say nothing about a
 shared `healthChecks` option (`modules/features/health-endpoints.nix`), and
 `modules/features/status-page.nix` collects `healthChecks` from **every**
 host in `self.nixosConfigurations` — not just the host it runs on — into
-one [gatus](https://github.com/TwiN/gatus) dashboard, sectioned by host via
-gatus's `group` field. gatus was chosen over something like Uptime Kuma
-because it's configured entirely from Nix (a plain endpoint list) rather
-than through its own UI/DB, so it fits a git-checked-in flake:
+one [gatus](https://github.com/TwiN/gatus) dashboard behind its own Caddy
+vhost, sectioned by host via gatus's `group` field. gatus was chosen over
+something like Uptime Kuma because it's configured entirely from Nix (a
+plain endpoint list) rather than through its own UI/DB, so it fits a
+git-checked-in flake:
 
 ```nix
 # modules/features/jellyfin.nix
 flake.modules.nixos.jellyfin = { ... }: {
   services.jellyfin.enable = true;
-  # option declared by `healthEndpoints`, not here — see note below
+  # option declared by `healthEndpoints`, pulled in transitively by
+  # whatever host also imports `statusPage` — see below
   healthChecks = [{ name = "jellyfin"; url = "http://localhost:8096/health"; }];
 };
 ```
 
-**Important asymmetry, learned the hard way:** a feature that *sets*
-`healthChecks` (jellyfin, immich, dns-server) needs `healthEndpoints` (the
-module that does `options.healthChecks = lib.mkOption { ... };`) somewhere
-in its host's import list — but `statusPage` deliberately does **not**
-import `healthEndpoints` itself. Early on it did, and combining it with two
-health-registering features on the same host (jellyfin + immich on
-telemachus) failed with "already declared" — NixOS does not dedupe repeated
-*option declarations* the way it dedupes plain config, so anything that
-does `options.foo = lib.mkOption {...}` can only be imported from **one**
-place per host. `statusPage` doesn't need it anyway: it never reads/writes
-`config.healthChecks` on its own module, only `self.nixosConfigurations.*
-.config.healthChecks` from the outside (`or [ ]`-guarded, since a host that
-never imported `healthEndpoints` — e.g. `homelab` — has no such option at
-all). So: **every host that sets `healthChecks` imports `healthEndpoints`
-directly** (see `telemachus`); `statusPage` is imported on exactly one host
-— whichever will actually run the dashboard:
+A host gets the *whole* dashboard — the `healthChecks` option, gatus
+itself, and its Caddy vhost — from **one** import:
 
 ```nix
 # modules/hosts/telemachus/configuration.nix
 imports = with self.modules.nixos; [
   jellyfin immich nut-client
-  healthEndpoints  # because jellyfin/immich set healthChecks below
-  statusPage       # runs the *unified* dashboard for every host, not just this one
-  caddy statusProxy
+  statusPage  # self-imports healthEndpoints + caddy; see below
 ];
 ```
+
+`statusPage` self-imports its two dependencies (`healthEndpoints`, `caddy`)
+the same way `jellyfin` self-imports `nas-media` — the host only ever names
+the one feature it actually wants. `caddy` in turn owns the
+`homelab.baseDomain` option (default `lind.estate`) for the same reason
+`nas-media` owns `mediaMount.group`/`mountPoint`: it's the shared primitive,
+so anything else that ever fronts a vhost through `caddy` reads the same
+option rather than each redeclaring its own.
+
+**A real trap this shape can reintroduce, worth remembering:** `caddy` and
+`healthEndpoints` both do `options.foo = lib.mkOption {...}`, and NixOS does
+not dedupe repeated *option declarations* the way it dedupes plain config —
+importing the same `mkOption`-containing module from **two** different
+places on one host fails with "already declared" (this is exactly what
+broke when `jellyfin`, `immich`, and `statusPage` each separately
+self-imported `healthEndpoints` early on). It works here because
+`statusPage` is the **only** thing that imports `healthEndpoints` or
+`caddy` — if some other feature ever needs `caddy` too (e.g. a second vhost
+unrelated to status), it must self-import `caddy` itself and **not** also
+be combined with `statusPage` on the same host, or vice versa. A feature
+that only wants to *report* a check without hosting the dashboard would
+similarly need `healthEndpoints` directly, not `statusPage` — not a real
+case yet, since telemachus both reports and hosts.
 
 Each host's real LAN address comes from `modules/network.nix`
 (`self.homelabHosts`) — `statusPage` rewrites each check's `localhost` to
 that host's address, since one gatus instance now reaches every host's
-services (jellyfin/immich already set `openFirewall = true`, so this
-works over the LAN as-is). `healthChecks` entries are gatus endpoints —
-`url` can be `http://...` (HTTP check) or `tcp://host:port` (plain
-connectivity check, e.g. `dns-server`'s dnsmasq). Not every feature has a
-meaningful health check to register (e.g. `nut-client` only watches a UPS
-elsewhere on the network) — that's fine, it's opt-in per feature.
+services (jellyfin/immich already set `openFirewall = true`, so this works
+over the LAN as-is). `healthChecks` entries are gatus endpoints — `url` can
+be `http://...` (HTTP check) or `tcp://host:port` (plain connectivity
+check, e.g. `dns-server`'s dnsmasq). Not every feature has a meaningful
+health check to register (e.g. `nut-client` only watches a UPS elsewhere on
+the network) — that's fine, it's opt-in per feature.
 
 Adding a new host to the dashboard needs no changes to `statusPage`
 itself — the moment that host has any feature registering `healthChecks`
-(plus `healthEndpoints` in its own imports, and an entry in
-`self.homelabHosts`), its checks appear on telemachus's page, grouped
-under its own hostname.
+and an entry in `self.homelabHosts`, its checks appear on telemachus's
+page, grouped under its own hostname (it still needs `healthEndpoints` —
+or `statusPage` — in its own imports for `healthChecks` to be a valid
+option to set at all).
 
-## Reverse proxy for the status page
-
-`modules/features/status-proxy.nix` fronts the one unified `statusPage`
-with Caddy at `status.<baseDomain>`, kept LAN-only even though it gets a
-real cert: `caddy.nix`'s porkbun DNS-01 challenge proves domain ownership
-without needing 80/443 reachable from the internet, so the hostname
-resolves with valid TLS while access is still gated inside Caddy
-(`remote_ip` matcher), not just left to the firewall. Import `caddy` and
-`statusProxy` only on the host running `statusPage` (currently telemachus).
-
-`homelab.baseDomain` (declared in `status-proxy.nix`) defaults to
-`lind.estate`. One thing still to fix before this actually works:
-`caddy.nix`'s plugin build has `hash = "";` — a genuine placeholder nixpkgs
-expects you to fill in from the real build error (`nix build` will report
-the correct hash) before caddy can build for *any* host, not just this one.
+The dashboard is served at `status.<baseDomain>` (currently
+`status.lind.estate`), kept LAN-only even though it gets a real cert:
+`caddy.nix`'s porkbun DNS-01 challenge proves domain ownership without
+needing 80/443 reachable from the internet, so the hostname resolves with
+valid TLS while access is still gated inside Caddy (`remote_ip` matcher),
+not just left to the firewall. One thing still to fix before any of this
+actually builds: `caddy.nix`'s plugin build has `hash = "";` — a genuine
+placeholder nixpkgs expects you to fill in from the real build error
+(`nix build` will report the correct hash).
 
 ## Notes
 
