@@ -9,7 +9,11 @@
       diskoGptLvm
       nix-settings
       statusPage
+      caddy
+      statusProxy
     ];
+
+    networking.hostName = "telemachus";
 
     diskoConfig.primaryDisk = "/dev/nvme0n1";
 

@@ -182,6 +182,25 @@ real exposure is a follow-up, not done yet. Not every feature has a
 meaningful health check to register (e.g. `nut-client` only watches a UPS
 elsewhere on the network) — that's fine, it's opt-in per feature.
 
+## Reverse proxy for status pages
+
+`modules/features/status-proxy.nix` fronts a host's own `statusPage` (gatus)
+with Caddy at `status.<hostname>.<baseDomain>`, kept LAN-only even though it
+gets a real cert: `caddy.nix`'s porkbun DNS-01 challenge proves domain
+ownership without needing 80/443 reachable from the internet, so the
+hostname resolves with valid TLS while access is still gated inside Caddy
+(`remote_ip` matcher), not just left to the firewall. A host wanting this
+imports `caddy`, `statusPage`, and `statusProxy` together, and needs
+`networking.hostName` set (used to build the vhost — see `telemachus`).
+
+Two things to fix before this actually works, both flagged in-place:
+
+- `homelab.baseDomain` (declared in `status-proxy.nix`) defaults to a
+  `CHANGE-ME` placeholder — set it to your real domain before deploying.
+- `caddy.nix`'s plugin build has `hash = "";` — a genuine placeholder nixpkgs
+  expects you to fill in from the real build error (`nix build` will report
+  the correct hash) before caddy can build for *any* host, not just this one.
+
 ## Notes
 
 - `old/` holds the pre-rewrite, non-dendritic config for reference during
