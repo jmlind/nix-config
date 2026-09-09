@@ -22,13 +22,13 @@
         };
         gid = lib.mkOption {
           type = lib.types.int;
-          default = 2100;
           description = ''
             Static gid for `mediaMount.group`. Fixed (rather than left to
             NixOS's usual dynamic allocation) so it can be read at build
             time - e.g. to pass into a container via `--group-add`, which a
             container can't resolve by name since it has no matching
-            /etc/group entry of its own.
+            /etc/group entry of its own. No default - set explicitly per
+            host so it matches whatever gid the group already has on disk.
           '';
         };
       };
