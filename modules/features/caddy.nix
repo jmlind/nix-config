@@ -14,7 +14,7 @@
         services.caddy = {
           enable = true;
           package = pkgs.caddy.withPlugins {
-            plugins = [ "github.com/caddy-dns/porkbun@..." ];
+            plugins = [ "github.com/caddy-dns/porkbun@v0.3.1" ];
             hash = ""; # nix build will report the correct hash
           };
           globalConfig = ''
