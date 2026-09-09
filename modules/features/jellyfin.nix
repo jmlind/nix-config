@@ -16,8 +16,8 @@
       pkgs.jellyfin-ffmpeg
     ];
 
-    # Requires `statusPage` (declares this option) somewhere in the host's
-    # import closure — see modules/features/health-endpoints.nix.
+    # Requires `healthEndpoints` (declares this option) somewhere in the
+    # host's import closure — see modules/features/health-endpoints.nix.
     healthChecks = [
       {
         name = "jellyfin";

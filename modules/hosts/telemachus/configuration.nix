@@ -8,7 +8,8 @@
       nut-client
       diskoGptLvm
       nix-settings
-      statusPage
+      healthEndpoints # declares the option jellyfin/immich set below
+      statusPage # runs the unified dashboard for every host, not just this one
       caddy
       statusProxy
     ];

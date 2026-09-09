@@ -1,9 +1,6 @@
 { self, lib, ... }:
 let
-  hostIPs = {
-    homelab    = "192.168.1.168";
-    telemachus = "192.168.1.169";
-  };
+  hostIPs = self.homelabHosts;
   allRecords = lib.foldl'
     (acc: node: acc // node.config.homelab.dns.records)
     { }
@@ -23,9 +20,9 @@ in {
     };
 
     # TCP check, not HTTP: dnsmasq doesn't speak HTTP, but a successful TCP
-    # connect on 53 is a reasonable "is it up" signal. Requires `statusPage`
-    # (declares this option) somewhere in the host's import closure — see
-    # modules/features/health-endpoints.nix.
+    # connect on 53 is a reasonable "is it up" signal. Requires
+    # `healthEndpoints` (declares this option) somewhere in the host's
+    # import closure — see modules/features/health-endpoints.nix.
     healthChecks = [
       {
         name = "dns-server";
