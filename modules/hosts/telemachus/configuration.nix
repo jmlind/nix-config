@@ -8,7 +8,10 @@
       nut-client
       diskoGptLvm
       nix-settings
+      statusPage
     ];
+
+    networking.hostName = "telemachus";
 
     diskoConfig.primaryDisk = "/dev/nvme0n1";
 

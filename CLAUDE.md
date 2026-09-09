@@ -92,6 +92,87 @@ addition to that host's `imports` list; adding a brand new feature to the
 repo is just a new file in `modules/features/` that nothing else has to
 touch.
 
+## Live health: one status page, aggregated across hosts
+
+VM checks answer "does this evaluate and boot"; they say nothing about a
+*running* host. For that, features self-register a health check into a
+shared `healthChecks` option (`modules/features/health-endpoints.nix`), and
+`modules/features/status-page.nix` collects `healthChecks` from **every**
+host in `self.nixosConfigurations` — not just the host it runs on — into
+one [gatus](https://github.com/TwiN/gatus) dashboard behind its own Caddy
+vhost, sectioned by host via gatus's `group` field. gatus was chosen over
+something like Uptime Kuma because it's configured entirely from Nix (a
+plain endpoint list) rather than through its own UI/DB, so it fits a
+git-checked-in flake:
+
+```nix
+# modules/features/jellyfin.nix
+flake.modules.nixos.jellyfin = { ... }: {
+  services.jellyfin.enable = true;
+  # option declared by `healthEndpoints`, pulled in transitively by
+  # whatever host also imports `statusPage` — see below
+  healthChecks = [{ name = "jellyfin"; url = "http://localhost:8096/health"; }];
+};
+```
+
+A host gets the *whole* dashboard — the `healthChecks` option, gatus
+itself, and its Caddy vhost — from **one** import:
+
+```nix
+# modules/hosts/telemachus/configuration.nix
+imports = with self.modules.nixos; [
+  jellyfin immich nut-client
+  statusPage  # self-imports healthEndpoints + caddy; see below
+];
+```
+
+`statusPage` self-imports its two dependencies (`healthEndpoints`, `caddy`)
+the same way `jellyfin` self-imports `nas-media` — the host only ever names
+the one feature it actually wants. `caddy` in turn owns the
+`homelab.baseDomain` option (default `lind.estate`) for the same reason
+`nas-media` owns `mediaMount.group`/`mountPoint`: it's the shared primitive,
+so anything else that ever fronts a vhost through `caddy` reads the same
+option rather than each redeclaring its own.
+
+**A real trap this shape can reintroduce, worth remembering:** `caddy` and
+`healthEndpoints` both do `options.foo = lib.mkOption {...}`, and NixOS does
+not dedupe repeated *option declarations* the way it dedupes plain config —
+importing the same `mkOption`-containing module from **two** different
+places on one host fails with "already declared" (this is exactly what
+broke when `jellyfin`, `immich`, and `statusPage` each separately
+self-imported `healthEndpoints` early on). It works here because
+`statusPage` is the **only** thing that imports `healthEndpoints` or
+`caddy` — if some other feature ever needs `caddy` too (e.g. a second vhost
+unrelated to status), it must self-import `caddy` itself and **not** also
+be combined with `statusPage` on the same host, or vice versa. A feature
+that only wants to *report* a check without hosting the dashboard would
+similarly need `healthEndpoints` directly, not `statusPage` — not a real
+case yet, since telemachus both reports and hosts.
+
+Each host's real LAN address comes from `modules/network.nix`
+(`self.homelabHosts`) — `statusPage` rewrites each check's `localhost` to
+that host's address, since one gatus instance now reaches every host's
+services (jellyfin/immich already set `openFirewall = true`, so this works
+over the LAN as-is). `healthChecks` entries are gatus endpoints — `url` can
+be `http://...` (HTTP check) or `tcp://host:port` (plain connectivity
+check, e.g. `dns-server`'s dnsmasq). Not every feature has a meaningful
+health check to register (e.g. `nut-client` only watches a UPS elsewhere on
+the network) — that's fine, it's opt-in per feature.
+
+Adding a new host to the dashboard needs no changes to `statusPage`
+itself — the moment that host has any feature registering `healthChecks`
+and an entry in `self.homelabHosts`, its checks appear on telemachus's
+page, grouped under its own hostname (it still needs `healthEndpoints` —
+or `statusPage` — in its own imports for `healthChecks` to be a valid
+option to set at all).
+
+The dashboard is served at `status.<baseDomain>` (currently
+`status.lind.estate`), kept LAN-only even though it gets a real cert:
+`caddy.nix`'s porkbun DNS-01 challenge proves domain ownership without
+needing 80/443 reachable from the internet, so the hostname resolves with
+valid TLS while access is still gated inside Caddy (`remote_ip` matcher),
+not just left to the firewall.
+
 ## Notes
 
 - `old/` holds the pre-rewrite, non-dendritic config for reference during

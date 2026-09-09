@@ -12,5 +12,12 @@
         createDB = true;
       };
     };
+
+    healthChecks = [
+      {
+        name = "immich";
+        url = "http://localhost:2283/api/server/ping";
+      }
+    ];
   };
 }
