@@ -21,13 +21,24 @@ rendered into an env file consumed by `modules/features/caddy.nix`).
 
    This prints an `age1...` public key.
 
-2. **Get each host's age key**, derived from its existing SSH host key (no
-   separate key to provision or rotate). Run on the host, or against a copy
-   of its public key:
+2. **Generate a dedicated age key per host** (independent of SSH — no
+   ssh_host_ed25519_key to depend on, no coupling to whether openssh is even
+   enabled):
 
    ```
-   nix run nixpkgs#ssh-to-age -- < /etc/ssh/ssh_host_ed25519_key.pub
+   age-keygen -o key-homelab.txt
    ```
+
+   This prints the host's `age1...` public key. Copy the private key file
+   onto the host at the path `sops.age.keyFile` expects
+   (`modules/features/sops.nix`), then remove your local copy:
+
+   ```
+   ssh homelab 'sudo install -D -m 0400 -o root -g root /dev/stdin /var/lib/sops-nix/key.txt' < key-homelab.txt
+   rm key-homelab.txt
+   ```
+
+   Repeat per host (`key-telemachus.txt`, etc.) if/when it needs secrets too.
 
 3. **Fill in `.sops.yaml`** at the repo root: replace the
    `age1REPLACE_WITH_...` placeholders with the real public keys from steps

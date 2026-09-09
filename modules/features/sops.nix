@@ -2,8 +2,10 @@
   flake.modules.nixos.sops = {
     imports = [ inputs.sops-nix.nixosModules.sops ];
 
-    # Decrypt with the host's own SSH host key instead of provisioning and
-    # rotating a separate age key per machine.
-    sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+    # A dedicated per-host age key, independent of SSH (no ssh_host_ed25519_key
+    # to depend on, no coupling to whether openssh is even enabled). Generate
+    # with `age-keygen` and copy it to this path on each host — see
+    # secrets/README.md.
+    sops.age.keyFile = "/var/lib/sops-nix/key.txt";
   };
 }
