@@ -71,6 +71,10 @@
         "--device=/dev/sr0:/dev/sr0" # Pass through the CD/DVD drive
         #"--device=/dev/dri:/dev/dri"
         "--privileged" # Run the container in privileged mode
+        # The container has no "mediaMount.group" entry of its own, so
+        # docker can't resolve that name via --group-add; pass the group's
+        # (static) gid instead, which needs no /etc/group lookup.
+        "--group-add=${toString config.mediaMount.gid}"
       ];
 
     };
