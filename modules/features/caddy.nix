@@ -12,6 +12,7 @@
       # be nested under `config` too — see nas-media.nix/disko-gpt-lvm.nix.
       config = {
         services.caddy = {
+          enable = true;
           package = pkgs.caddy.withPlugins {
             plugins = [ "github.com/caddy-dns/porkbun@..." ];
             hash = ""; # nix build will report the correct hash
