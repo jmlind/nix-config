@@ -12,9 +12,6 @@
   outputs =
     inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      # Needed for perSystem (used by modules/tests/* to define `checks`).
-      systems = [ "x86_64-linux" ];
-
       imports = [
         # Declares flake.modules.<class>.<name> as a real, mergeable option;
         # every feature/host file below relies on it.

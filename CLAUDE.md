@@ -92,43 +92,6 @@ addition to that host's `imports` list; adding a brand new feature to the
 repo is just a new file in `modules/features/` that nothing else has to
 touch.
 
-## Testing: VM checks
-
-Tests live under `modules/tests/` and are ordinary flake-parts modules too —
-`import-tree` picks them up the same way it picks up features and hosts.
-Each one contributes a `pkgs.testers.nixosTest` to `perSystem.checks.<name>`:
-
-```nix
-# modules/tests/jellyfin.nix
-{ self, ... }: {
-  perSystem = { pkgs, ... }: {
-    checks.jellyfin = pkgs.testers.nixosTest {
-      name = "jellyfin";
-      nodes.machine = { imports = [ self.modules.nixos.jellyfin ]; };
-      testScript = ''
-        machine.wait_for_unit("jellyfin.service")
-        machine.wait_for_open_port(8096)
-      '';
-    };
-  };
-}
-```
-
-Run everything with `nix flake check`, or one check at a time with
-`nix build .#checks.x86_64-linux.<name> -L`.
-
-- Prefer **feature-level** tests like the example above: import just the one
-  `self.modules.nixos.<feature>` into a throwaway VM and assert the service
-  behaves. Cheap and isolated, and there's no reason every feature can't get
-  one eventually.
-- A **host-level** smoke test (booting `self.nixosModules.<host>Configuration`
-  itself) is more work: `telemachus`/`homelab` import real hardware modules
-  and `disko`, which assume physical disks and won't boot as-is in a VM —
-  that config needs to be substituted or stripped for the test node.
-- `flake.nix` declares `systems = [ "x86_64-linux" ];` so `perSystem` (and
-  thus `checks`) is available — add more systems here if a feature (e.g.
-  `arm.nix`) needs testing on another architecture.
-
 ## Live health: one status page, aggregated across hosts
 
 VM checks answer "does this evaluate and boot"; they say nothing about a
@@ -208,10 +171,7 @@ The dashboard is served at `status.<baseDomain>` (currently
 `caddy.nix`'s porkbun DNS-01 challenge proves domain ownership without
 needing 80/443 reachable from the internet, so the hostname resolves with
 valid TLS while access is still gated inside Caddy (`remote_ip` matcher),
-not just left to the firewall. One thing still to fix before any of this
-actually builds: `caddy.nix`'s plugin build has `hash = "";` — a genuine
-placeholder nixpkgs expects you to fill in from the real build error
-(`nix build` will report the correct hash).
+not just left to the firewall.
 
 ## Notes
 
