@@ -8,14 +8,12 @@
         description = "Base domain for anything this host fronts through Caddy, e.g. status.<baseDomain>.";
       };
 
-      # Once a module declares `options.*` explicitly, sibling config has to
-      # be nested under `config` too — see nas-media.nix/disko-gpt-lvm.nix.
       config = {
         services.caddy = {
           enable = true;
           package = pkgs.caddy.withPlugins {
             plugins = [ "github.com/caddy-dns/porkbun@v0.3.1" ];
-            hash = ""; # nix build will report the correct hash
+            hash = "sha256-CjL8dMdnsiawaPiQGRvL3he4Ydd3nIbQs6tBWMwUbaw=";
           };
           globalConfig = ''
             acme_dns porkbun {
