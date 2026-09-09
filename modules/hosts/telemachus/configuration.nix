@@ -8,7 +8,7 @@
       nut-client
       diskoGptLvm
       nix-settings
-      statusPage # pulls in healthEndpoints + caddy itself; runs the unified dashboard for every host, not just this one
+      statusPage
     ];
 
     networking.hostName = "telemachus";

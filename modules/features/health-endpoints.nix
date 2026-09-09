@@ -1,7 +1,3 @@
-# Generic option any feature can append to: "here is how to check that the
-# service I define is alive". Nothing consumes this on its own — it's read
-# by modules/features/status-page.nix, which turns whatever a given host's
-# imported features registered into that host's status dashboard.
 {
   flake.modules.nixos.healthEndpoints =
     { lib, ... }:

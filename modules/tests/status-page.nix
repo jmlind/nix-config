@@ -1,8 +1,3 @@
-# Checks the aggregation logic itself: telemachus's assembled gatus config
-# should contain an endpoint for every feature that registered a
-# healthCheck (jellyfin, immich), each tagged with its host as `group`.
-# Eval-only (no VM boot) since statusPage now reads real
-# self.nixosConfigurations, not a throwaway test node.
 { self, ... }:
 {
   perSystem =

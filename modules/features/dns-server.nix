@@ -19,10 +19,6 @@ in {
       };
     };
 
-    # TCP check, not HTTP: dnsmasq doesn't speak HTTP, but a successful TCP
-    # connect on 53 is a reasonable "is it up" signal. Requires
-    # `healthEndpoints` (declares this option) somewhere in the host's
-    # import closure — see modules/features/health-endpoints.nix.
     healthChecks = [
       {
         name = "dns-server";

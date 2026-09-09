@@ -23,8 +23,6 @@
           '';
         };
 
-        # DNS-01 (porkbun above) doesn't need 80 open to issue certs, but 443
-        # does need to be open for anything actually proxied through this host.
         networking.firewall.allowedTCPPorts = [ 443 ];
       };
     };

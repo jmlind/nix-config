@@ -16,8 +16,6 @@
       pkgs.jellyfin-ffmpeg
     ];
 
-    # Requires `healthEndpoints` (declares this option) somewhere in the
-    # host's import closure — see modules/features/health-endpoints.nix.
     healthChecks = [
       {
         name = "jellyfin";
