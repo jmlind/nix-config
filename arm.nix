@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }: {
+{ config, pkgs, lib, ... }: {
   # set up directories with arm user and group ownership
   systemd.tmpfiles.rules = [
     "d /home/arm/logs 0755 arm arm -"
@@ -20,6 +20,7 @@
   users.users.arm = {
     isNormalUser = true;
     description = "arm";
+    uid = 1001;
     group = "arm";
     extraGroups = [ "arm" "cdrom" "video" "render" "docker" "nas-media" ];
   };
@@ -32,10 +33,12 @@
     autoStart = true; # Automatically start the container on boot
     image = "automaticrippingmachine/automatic-ripping-machine:2.24.0";
     ports = [ "8080:8080" ];
-    # TODO: Use id arm to get the UID and GID for the arm user after creation
     environment = {
-      ARM_UID = "1001"; # UID of the 'arm' user on the host system
-      ARM_GID = "994"; # GID of the 'arm' group on the host system
+      ARM_UID = toString config.users.users.arm.uid; # UID of the 'arm' user on the host system
+      # GID of the 'nas-media' group, not the 'arm' group: the CIFS mount at
+      # /mnt/media forces gid=nas-media (dir_mode=0775) on every file, so the
+      # container process must share that gid to get write access to the share.
+      ARM_GID = toString config.users.groups.nas-media.gid;
     };
     # Mount 'host directory' to 'container directory'
     volumes = [
