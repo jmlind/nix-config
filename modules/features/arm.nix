@@ -42,6 +42,14 @@
       description = "arm";
       group = "arm";
       uid = 1100;
+      # NixOS defaults a normal user's home to mode 0700. The rip/transcode
+      # step inside the container doesn't reliably run as uid 1100 (unlike
+      # the web UI, which does), so it can't even traverse into /home/arm to
+      # create the intermediate "media/transcode/movies/<title>" folder -
+      # it fails with "Could not create folder" before ever touching the
+      # final mediaMount destination. Loosen traversal so it isn't gated on
+      # matching the owner uid exactly.
+      homeMode = "755";
       extraGroups = [
         "arm"
         "cdrom"
@@ -55,7 +63,12 @@
     systemd.tmpfiles.rules = [
       "d /home/arm/logs 0755 arm arm -"
       "d /home/arm/music 0755 arm arm -"
-      "d /home/arm/media 0755 arm arm -"
+      # 0777: the rip/transcode step is the process actually creating
+      # subfolders here (media/transcode/movies/<title>), and it doesn't
+      # reliably run as uid/gid 1100 - see homeMode comment above. 0755
+      # only lets the exact owner uid create new folders; other uids could
+      # traverse but not write, so folder creation still failed.
+      "d /home/arm/media 0777 arm arm -"
       "d /home/arm/config 0755 arm arm -"
     ];
     # Configure the ARM container
