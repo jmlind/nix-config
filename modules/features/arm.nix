@@ -20,6 +20,17 @@
     # Open port 8080 for the web UI of the container
     networking.firewall.allowedTCPPorts = [ 8080 ];
 
+    # mediaMount is `noauto` + `x-systemd.automount` (see nas-media.nix), so
+    # it isn't mounted until first accessed. Without this, docker-arm.service
+    # starts at boot and bind-mounts the empty local mountpoint directory
+    # before the automount ever fires, so the container never sees the real
+    # share - every rip then fails with "Could not create folder" trying to
+    # write its output there. RequiresMountsFor makes systemd trigger the
+    # automount and wait for it before starting the container.
+    systemd.services."docker-arm".serviceConfig.RequiresMountsFor = [
+      config.mediaMount.mountPoint
+    ];
+
     # Create a group 'arm' for the container
     users.groups.arm = {
       gid = 1100;
