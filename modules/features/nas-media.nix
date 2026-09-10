@@ -46,7 +46,14 @@
             "nofail"
             "noauto"
             "x-systemd.automount"
-            "gid=${cfg.group}"
+            # Numeric, not the name: name lookup resolves against the
+            # host's actual /etc/group at mount time, which can be stale -
+            # mutableUsers doesn't renumber a group that already existed
+            # before `gid` was pinned here. Consumers (e.g. arm.nix's
+            # `--group-add`) already use the numeric cfg.gid; matching it
+            # here keeps both sides pointed at the same id regardless of
+            # what's actually on disk.
+            "gid=${toString cfg.gid}"
             "file_mode=0664"
             "dir_mode=0775"
           ];
