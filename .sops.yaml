@@ -1,14 +1,6 @@
 keys:
-  - &admin age1j68r666jdchee0wnlr9779dqxvlvcfvr0h4gnazdfwl5c2gyayjs5c023q
-
-  # Per-host keys located at /var/lib/sops-nix/key.txt (see sops module);
-  - &host_homelab age1fulwwwh72m0lkkpk4zsy53mskdq2p2xhpthdceq8u2czx05ukgaqegjsjk
-  - &host_telemachus age1zvsqtrsmdd5m4q6vtjazn2y8f6wxt9ccuqtq9e6jwgc3esk2hvxsxtntgy
-
+  - &jmlind age1j68r666jdchee0wnlr9779dqxvlvcfvr0h4gnazdfwl5c2gyayjs5c023q
 creation_rules:
-  - path_regex: secrets/.*\.yaml$
-    key_groups:
-      - age:
-          - *admin
-          - *host_homelab
-          - *host_telemachus
+  - path_regex: ^.*$
+    age:
+      - *jmlind
