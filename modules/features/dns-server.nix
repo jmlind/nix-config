@@ -1,9 +1,6 @@
 { self, lib, ... }:
 let
-  hostIPs = {
-    homelab    = "192.168.1.168";
-    telemachus = "192.168.1.169";
-  };
+  hostIPs = self.homelabHosts;
   allRecords = lib.foldl'
     (acc: node: acc // node.config.homelab.dns.records)
     { }
@@ -21,5 +18,13 @@ in {
         server = [ "1.1.1.1" "9.9.9.9" ]; # forward everything else upstream
       };
     };
+
+    healthChecks = [
+      {
+        name = "dns-server";
+        url = "tcp://localhost:53";
+        conditions = [ "[CONNECTED] == true" ];
+      }
+    ];
   };
 }

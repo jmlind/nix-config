@@ -20,12 +20,23 @@
           type = lib.types.str;
           default = "/mnt/media";
         };
+        gid = lib.mkOption {
+          type = lib.types.int;
+          default = 2100;
+          description = ''
+            Static gid for `mediaMount.group`. Fixed (rather than left to
+            NixOS's usual dynamic allocation) so it can be read at build
+            time - e.g. to pass into a container via `--group-add`, which a
+            container can't resolve by name since it has no matching
+            /etc/group entry of its own.
+          '';
+        };
       };
 
       config = {
         environment.systemPackages = [ pkgs.cifs-utils ];
 
-        users.groups.${cfg.group} = { };
+        users.groups.${cfg.group} = { gid = cfg.gid; };
 
         fileSystems.${cfg.mountPoint} = {
           device = "//mars/media";

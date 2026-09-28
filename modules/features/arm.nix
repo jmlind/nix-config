@@ -20,23 +20,22 @@
     # Open port 8080 for the web UI of the container
     networking.firewall.allowedTCPPorts = [ 8080 ];
 
-    # Create a group 'arm' for the container
-    users.groups.arm = {
-      gid = 1100;
-    };
+    # Mount the NAS media share under its own 'arm' group/gid, dedicated to
+    # this container rather than shared with the rest of nas-media's users.
+    mediaMount.group = "arm";
+    mediaMount.gid = 1100;
 
     # Create a user 'arm' for the container; set the password with `passwd`
+    # (its group is created by nas-media, above, from mediaMount.group/gid)
     users.users.arm = {
       isNormalUser = true;
       description = "arm";
-      group = "arm";
+      group = config.mediaMount.group;
       uid = 1100;
       extraGroups = [
-        "arm"
         "cdrom"
         "video"
         "render"
-        config.mediaMount.group
       ];
     };
 
@@ -55,7 +54,7 @@
       # TODO: Use id arm to get the UID and GID for the arm user after creation
       environment = {
         ARM_UID = toString config.users.users.arm.uid;
-        ARM_GID = toString config.users.groups.arm.gid;
+        ARM_GID = toString config.mediaMount.gid;
       };
 
       # Mount 'host directory' to 'container directory'
@@ -71,6 +70,10 @@
         "--device=/dev/sr0:/dev/sr0" # Pass through the CD/DVD drive
         #"--device=/dev/dri:/dev/dri"
         "--privileged" # Run the container in privileged mode
+        # The container has no "mediaMount.group" entry of its own, so
+        # docker can't resolve that name via --group-add; pass the group's
+        # (static) gid instead, which needs no /etc/group lookup.
+        "--group-add=${toString config.mediaMount.gid}"
       ];
 
     };

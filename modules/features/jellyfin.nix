@@ -15,5 +15,12 @@
       pkgs.jellyfin-web
       pkgs.jellyfin-ffmpeg
     ];
+
+    healthChecks = [
+      {
+        name = "jellyfin";
+        url = "http://localhost:8096/health";
+      }
+    ];
   };
 }
