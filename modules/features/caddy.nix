@@ -6,11 +6,25 @@
       lib,
       ...
     }:
+    let
+      # webServices from every host; upstream is the host that declared it.
+      allServices = lib.concatMap (
+        node:
+        let
+          host = node.config.networking.hostName;
+        in
+        lib.mapAttrsToList (name: svc: svc // {
+          inherit name;
+          upstream =
+            if host == config.networking.hostName then "localhost" else inputs.self.homelabHosts.${host};
+        }) (node.config.webServices or { })
+      ) (lib.attrValues inputs.self.nixosConfigurations);
+    in
     {
       options.caddy.baseDomain = lib.mkOption {
         type = lib.types.str;
         default = "lind.estate";
-        description = "Base domain for each webServices entry, served as <name>.<baseDomain>. dns-server publishes every vhost name automatically.";
+        description = "Base domain for each webServices entry, served as <name>.<baseDomain>. Covers webServices from every host; dns-server points each name here.";
       };
 
       imports = [
@@ -40,22 +54,22 @@
             }
           '';
 
-          virtualHosts = lib.mapAttrs' (
-            name: svc:
-            lib.nameValuePair "${name}.${config.caddy.baseDomain}" {
+          virtualHosts = lib.listToAttrs (map (
+            svc:
+            lib.nameValuePair "${svc.name}.${config.caddy.baseDomain}" {
               extraConfig =
                 if svc.lanOnly then
                   ''
                     @lan remote_ip 192.168.1.0/24 127.0.0.1
                     handle @lan {
-                      reverse_proxy localhost:${toString svc.port}
+                      reverse_proxy ${svc.upstream}:${toString svc.port}
                     }
                     respond 403
                   ''
                 else
-                  "reverse_proxy localhost:${toString svc.port}";
+                  "reverse_proxy ${svc.upstream}:${toString svc.port}";
             }
-          ) config.webServices;
+          ) allServices);
         };
 
         networking.firewall.allowedTCPPorts = [ 80 443 ]; # 80 only redirects to https

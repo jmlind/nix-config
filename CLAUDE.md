@@ -136,9 +136,11 @@ option rather than each redeclaring its own.
 
 Features never write Caddy config. They declare what they serve in the
 neutral `webServices` option (`modules/features/web-services.nix`), e.g.
-`webServices.jellyfin.port = 8096;` (`lanOnly` defaults to true), and `caddy`
-turns each entry into a `<name>.<baseDomain>` vhost on its own terms. A host
-without `caddy` simply ignores the entries.
+`webServices.jellyfin.port = 8096;` (`lanOnly` defaults to true). `caddy`
+collects `webServices` from **every** host, like `statusPage` does with
+`healthChecks`, and serves each as `<name>.<baseDomain>`, proxying to the host
+that declared it (e.g. `arm` on homelab proxies to homelab's IP). Only
+telemachus runs Caddy.
 
 DNS needs no per-feature wiring either: `dns-server` reads the vhost names from
 `services.caddy.virtualHosts` on every host in `self.nixosConfigurations` and
