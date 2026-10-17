@@ -136,21 +136,6 @@ collects from every host into dnsmasq) for the same reason
 so anything else that ever fronts a vhost through `caddy` reads the same
 option rather than each redeclaring its own.
 
-**A real trap this shape can reintroduce, worth remembering:** `caddy` and
-`healthEndpoints` both do `options.foo = lib.mkOption {...}`, and NixOS does
-not dedupe repeated *option declarations* the way it dedupes plain config —
-importing the same `mkOption`-containing module from **two** different
-places on one host fails with "already declared" (this is exactly what
-broke when `jellyfin`, `immich`, and `statusPage` each separately
-self-imported `healthEndpoints` early on). It works here because
-`statusPage` is the **only** thing that imports `healthEndpoints` or
-`caddy` — if some other feature ever needs `caddy` too (e.g. a second vhost
-unrelated to status), it must self-import `caddy` itself and **not** also
-be combined with `statusPage` on the same host, or vice versa. A feature
-that only wants to *report* a check without hosting the dashboard would
-similarly need `healthEndpoints` directly, not `statusPage` — not a real
-case yet, since telemachus both reports and hosts.
-
 Each host's real LAN address comes from `modules/network.nix`
 (`self.homelabHosts`) — `statusPage` rewrites each check's `localhost` to
 that host's address, since one gatus instance now reaches every host's
