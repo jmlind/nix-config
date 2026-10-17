@@ -3,6 +3,7 @@
   flake.nixosModules.telemachusConfiguration = { pkgs, lib, ... }: {
     imports = with self.modules.nixos; [
       telemachusHardware
+      dns-server
       jellyfin
       immich
       nut-client
