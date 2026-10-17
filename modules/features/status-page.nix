@@ -31,7 +31,6 @@
 
       networking.firewall.allowedTCPPorts = [ 8080 ];
 
-      services.caddy.virtualHosts."status.${config.caddy.baseDomain}".extraConfig =
-        "import lan_only localhost:8080";
+      webServices.status.port = 8080;
     };
 }

@@ -3,7 +3,7 @@
   flake.modules.nixos.jellyfin = { pkgs, config, ... }: {
     imports = [
       self.modules.nixos.nas-media
-      self.modules.nixos.caddy
+      self.modules.nixos.webServices
     ];
 
     users.users.jellyfin.extraGroups = [ config.mediaMount.group ];
@@ -19,8 +19,7 @@
       pkgs.jellyfin-ffmpeg
     ];
 
-    services.caddy.virtualHosts."jellyfin.${config.caddy.baseDomain}".extraConfig =
-      "import lan_only localhost:8096";
+    webServices.jellyfin.port = 8096;
 
     healthChecks = [
       {

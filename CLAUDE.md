@@ -129,13 +129,18 @@ imports = with self.modules.nixos; [
 `statusPage` self-imports its two dependencies (`healthEndpoints`, `caddy`)
 the same way `jellyfin` self-imports `nas-media` — the host only ever names
 the one feature it actually wants. `caddy` in turn owns the
-`caddy.baseDomain` option (default `lind.estate`) and a `lan_only`
-Caddyfile snippet (`import lan_only localhost:<port>` in a vhost) for the same reason
+`caddy.baseDomain` option (default `lind.estate`) for the same reason
 `nas-media` owns `mediaMount.group`/`mountPoint`: it's the shared primitive,
 so anything else that ever fronts a vhost through `caddy` reads the same
 option rather than each redeclaring its own.
 
-DNS needs no per-feature wiring: `dns-server` reads the vhost names from
+Features never write Caddy config. They declare what they serve in the
+neutral `webServices` option (`modules/features/web-services.nix`), e.g.
+`webServices.jellyfin.port = 8096;` (`lanOnly` defaults to true), and `caddy`
+turns each entry into a `<name>.<baseDomain>` vhost on its own terms. A host
+without `caddy` simply ignores the entries.
+
+DNS needs no per-feature wiring either: `dns-server` reads the vhost names from
 `services.caddy.virtualHosts` on every host in `self.nixosConfigurations` and
 points each name at the IP of the host that defines it. Adding a vhost is
 enough to get a LAN DNS record for it.
