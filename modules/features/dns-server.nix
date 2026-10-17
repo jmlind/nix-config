@@ -12,8 +12,10 @@ in {
     services.dnsmasq = {
       enable = true;
       settings = {
-        address = lib.mapAttrsToList
-          (fqdn: host: "/${fqdn}/${hostIPs.${host}}")
+        # host-record matches only the exact name; address=/x/ would also
+        # capture subdomains like _acme-challenge.x and answer them empty.
+        host-record = lib.mapAttrsToList
+          (fqdn: host: "${fqdn},${hostIPs.${host}}")
           allRecords;
         server = [ "1.1.1.1" "9.9.9.9" ]; # forward everything else upstream
       };
