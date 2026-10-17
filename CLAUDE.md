@@ -151,10 +151,6 @@ that only wants to *report* a check without hosting the dashboard would
 similarly need `healthEndpoints` directly, not `statusPage` — not a real
 case yet, since telemachus both reports and hosts.
 
-The way out of this trap is a fixed `key` on the shared module: the module
-system then imports it once per host however many features self-import it.
-`sops` does this, since `porkbun-secrets` and `nut-client` both import it.
-
 Each host's real LAN address comes from `modules/network.nix`
 (`self.homelabHosts`) — `statusPage` rewrites each check's `localhost` to
 that host's address, since one gatus instance now reaches every host's
