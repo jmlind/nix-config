@@ -13,6 +13,12 @@
         description = "Base domain for anything this host fronts through Caddy, e.g. status.<baseDomain>.";
       };
 
+      options.homelab.dns.records = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.enum (lib.attrNames inputs.self.homelabHosts));
+        default = { };
+        description = "FQDN -> homelabHosts name, served by whichever host imports dns-server.";
+      };
+
       imports = [ inputs.self.modules.nixos.porkbun-secrets ];
       config = {
         services.caddy = {

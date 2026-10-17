@@ -31,6 +31,8 @@
 
       networking.firewall.allowedTCPPorts = [ 8080 ];
 
+      homelab.dns.records."status.${config.homelab.baseDomain}" = config.networking.hostName;
+
       services.caddy.virtualHosts."status.${config.homelab.baseDomain}" = {
         extraConfig = ''
           @lan remote_ip 192.168.1.0/24 127.0.0.1

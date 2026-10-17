@@ -2,7 +2,7 @@
 let
   hostIPs = self.homelabHosts;
   allRecords = lib.foldl'
-    (acc: node: acc // node.config.homelab.dns.records)
+    (acc: node: acc // (node.config.homelab.dns.records or { }))
     { }
     (lib.attrValues self.nixosConfigurations);
 in {
