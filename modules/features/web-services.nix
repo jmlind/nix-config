@@ -2,6 +2,11 @@
   flake.modules.nixos.webServices =
     { lib, ... }:
     {
+      # caddy, jellyfin, immich, arm, ... all self-import this module. A fixed
+      # key makes the module system load it once per host; without it the
+      # option is declared twice and evaluation fails with "already declared".
+      key = "nix-config#webServices";
+
       options.webServices = lib.mkOption {
         type = lib.types.attrsOf (
           lib.types.submodule {
