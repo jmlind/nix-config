@@ -36,7 +36,7 @@
           '';
         };
 
-        networking.firewall.allowedTCPPorts = [ 443 ];
+        networking.firewall.allowedTCPPorts = [ 80 443 ]; # 80 only redirects to https
       };
     };
 }
