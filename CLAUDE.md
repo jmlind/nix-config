@@ -128,24 +128,16 @@ imports = with self.modules.nixos; [
 
 `statusPage` self-imports its two dependencies (`healthEndpoints`, `caddy`)
 the same way `jellyfin` self-imports `nas-media` — the host only ever names
-the one feature it actually wants. `caddy` in turn owns the
-`caddy.baseDomain` option (default `lind.estate`) for the same reason
-`nas-media` owns `mediaMount.group`/`mountPoint`: it's the shared primitive,
-so anything else that ever fronts a vhost through `caddy` reads the same
-option rather than each redeclaring its own.
+the one feature it actually wants.
 
-Features never write Caddy config. They declare what they serve in the
-neutral `webServices` option (`modules/features/web-services.nix`), e.g.
-`webServices.jellyfin.port = 8096;` (`lanOnly` defaults to true). `caddy`
-collects `webServices` from **every** host, like `statusPage` does with
-`healthChecks`, and serves each as `<name>.<baseDomain>`, proxying to the host
-that declared it (e.g. `arm` on homelab proxies to homelab's IP). Only
-telemachus runs Caddy.
-
-DNS needs no per-feature wiring either: `dns-server` reads the vhost names from
-`services.caddy.virtualHosts` on every host in `self.nixosConfigurations` and
-points each name at the IP of the host that defines it. Adding a vhost is
-enough to get a LAN DNS record for it.
+Web names are written down by hand in one table in
+`modules/features/dns-server.nix` (`flake.homelabServices`: name to
+`{ host; port; }`, plus `flake.homelabDomain`). dnsmasq points every
+`<name>.lind.estate` at telemachus, and telemachus's `caddy` reads the same
+table to serve each name LAN-only and proxy it to `host:port` (`localhost`
+for its own services, the host's LAN IP otherwise, e.g. `arm` on homelab).
+Features declare nothing about DNS or proxying; adding a service means adding
+one line to that table. Only telemachus runs Caddy.
 
 Each host's real LAN address comes from `modules/network.nix`
 (`self.homelabHosts`) — `statusPage` rewrites each check's `localhost` to
@@ -164,8 +156,7 @@ page, grouped under its own hostname (it still needs `healthEndpoints` —
 or `statusPage` — in its own imports for `healthChecks` to be a valid
 option to set at all).
 
-The dashboard is served at `status.<baseDomain>` (currently
-`status.lind.estate`), kept LAN-only even though it gets a real cert:
+The dashboard is served at `status.lind.estate`, kept LAN-only even though it gets a real cert:
 `caddy.nix`'s porkbun DNS-01 challenge proves domain ownership without
 needing 80/443 reachable from the internet, so the hostname resolves with
 valid TLS while access is still gated inside Caddy (`remote_ip` matcher),

@@ -1,8 +1,5 @@
-{ self, ... }:
 {
-  flake.modules.nixos.immich = { config, ... }: {
-    imports = [ self.modules.nixos.webServices ];
-
+  flake.modules.nixos.immich = {
     services.immich = {
       enable = true;
       port = 2283;
@@ -15,8 +12,6 @@
         createDB = true;
       };
     };
-
-    webServices.immich.port = config.services.immich.port;
 
     healthChecks = [
       {

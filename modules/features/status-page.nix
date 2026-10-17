@@ -30,7 +30,5 @@
       };
 
       networking.firewall.allowedTCPPorts = [ 8080 ];
-
-      webServices.status.port = 8080;
     };
 }
