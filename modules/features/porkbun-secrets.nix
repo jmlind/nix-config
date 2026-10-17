@@ -7,8 +7,8 @@
 
     sops.templates."porkbun.env" = {
       content = ''
-        PORKBUN_API_KEY=${config.sops.placeholder."porkbun/api_key"}
-        PORKBUN_API_SECRET_KEY=${config.sops.placeholder."porkbun/api_secret_key"}
+        PORKBUN_API_KEY=${config.sops.placeholder."porkbun_api_key"}
+        PORKBUN_API_SECRET_KEY=${config.sops.placeholder."porkbun_secret_key"}
       '';
       restartUnits = [ "caddy.service" ];
     };
