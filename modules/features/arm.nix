@@ -3,6 +3,7 @@
     imports = [
       inputs.self.modules.nixos.nas-media
       inputs.self.modules.nixos.containers
+      inputs.self.modules.nixos.webServices
     ];
 
     # pkgs
@@ -19,6 +20,7 @@
 
     # Open port 8080 for the web UI of the container
     networking.firewall.allowedTCPPorts = [ 8080 ];
+    webServices.arm.port = 8080;
 
     # Mount the NAS media share under its own 'arm' group/gid, dedicated to
     # this container rather than shared with the rest of nas-media's users.
