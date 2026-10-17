@@ -28,10 +28,18 @@
             hash = "sha256-CjL8dMdnsiawaPiQGRvL3he4Ydd3nIbQs6tBWMwUbaw=";
           };
           environmentFile = config.sops.templates."porkbun.env".path;
+          # Porkbun's nameservers can take minutes to serve a new TXT record,
+          # longer than Caddy's default 2m propagation timeout. Public
+          # resolvers keep the check off this host's own dnsmasq.
           globalConfig = ''
-            acme_dns porkbun {
-              api_key {env.PORKBUN_API_KEY}
-              api_secret_key {env.PORKBUN_API_SECRET_KEY}
+            cert_issuer acme {
+              dns porkbun {
+                api_key {env.PORKBUN_API_KEY}
+                api_secret_key {env.PORKBUN_API_SECRET_KEY}
+              }
+              resolvers 1.1.1.1 9.9.9.9
+              propagation_delay 30s
+              propagation_timeout 10m
             }
           '';
         };
