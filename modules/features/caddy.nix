@@ -7,16 +7,10 @@
       ...
     }:
     {
-      options.homelab.baseDomain = lib.mkOption {
+      options.caddy.baseDomain = lib.mkOption {
         type = lib.types.str;
         default = "lind.estate";
-        description = "Base domain for anything this host fronts through Caddy, e.g. status.<baseDomain>.";
-      };
-
-      options.homelab.dns.records = lib.mkOption {
-        type = lib.types.attrsOf (lib.types.enum (lib.attrNames inputs.self.homelabHosts));
-        default = { };
-        description = "FQDN -> homelabHosts name, served by whichever host imports dns-server.";
+        description = "Base domain for anything this host fronts through Caddy, e.g. status.<baseDomain>. dns-server publishes every vhost name automatically.";
       };
 
       imports = [ inputs.self.modules.nixos.porkbun-secrets ];
@@ -40,6 +34,16 @@
               resolvers 1.1.1.1 9.9.9.9
               propagation_delay 30s
               propagation_timeout 10m
+            }
+          '';
+          # `import lan_only <upstream>` in a vhost: proxy LAN clients, 403 the rest.
+          extraConfig = ''
+            (lan_only) {
+              @lan remote_ip 192.168.1.0/24 127.0.0.1
+              handle @lan {
+                reverse_proxy {args[0]}
+              }
+              respond 403
             }
           '';
         };

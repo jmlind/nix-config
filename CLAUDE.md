@@ -129,12 +129,16 @@ imports = with self.modules.nixos; [
 `statusPage` self-imports its two dependencies (`healthEndpoints`, `caddy`)
 the same way `jellyfin` self-imports `nas-media` — the host only ever names
 the one feature it actually wants. `caddy` in turn owns the
-`homelab.baseDomain` option (default `lind.estate`) and the
-`homelab.dns.records` option (FQDN to `homelabHosts` name, which `dns-server`
-collects from every host into dnsmasq) for the same reason
+`caddy.baseDomain` option (default `lind.estate`) and a `lan_only`
+Caddyfile snippet (`import lan_only localhost:<port>` in a vhost) for the same reason
 `nas-media` owns `mediaMount.group`/`mountPoint`: it's the shared primitive,
 so anything else that ever fronts a vhost through `caddy` reads the same
 option rather than each redeclaring its own.
+
+DNS needs no per-feature wiring: `dns-server` reads the vhost names from
+`services.caddy.virtualHosts` on every host in `self.nixosConfigurations` and
+points each name at the IP of the host that defines it. Adding a vhost is
+enough to get a LAN DNS record for it.
 
 Each host's real LAN address comes from `modules/network.nix`
 (`self.homelabHosts`) — `statusPage` rewrites each check's `localhost` to

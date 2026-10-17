@@ -1,5 +1,8 @@
+{ self, ... }:
 {
-  flake.modules.nixos.immich = {
+  flake.modules.nixos.immich = { config, ... }: {
+    imports = [ self.modules.nixos.caddy ];
+
     services.immich = {
       enable = true;
       port = 2283;
@@ -12,6 +15,9 @@
         createDB = true;
       };
     };
+
+    services.caddy.virtualHosts."immich.${config.caddy.baseDomain}".extraConfig =
+      "import lan_only localhost:${toString config.services.immich.port}";
 
     healthChecks = [
       {

@@ -31,16 +31,7 @@
 
       networking.firewall.allowedTCPPorts = [ 8080 ];
 
-      homelab.dns.records."status.${config.homelab.baseDomain}" = config.networking.hostName;
-
-      services.caddy.virtualHosts."status.${config.homelab.baseDomain}" = {
-        extraConfig = ''
-          @lan remote_ip 192.168.1.0/24 127.0.0.1
-          handle @lan {
-            reverse_proxy localhost:8080
-          }
-          respond 403
-        '';
-      };
+      services.caddy.virtualHosts."status.${config.caddy.baseDomain}".extraConfig =
+        "import lan_only localhost:8080";
     };
 }
