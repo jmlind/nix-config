@@ -1,3 +1,4 @@
+{ inputs, ... }:
 {
   flake.modules.nixos.nas-media =
     {
@@ -10,6 +11,8 @@
       cfg = config.mediaMount;
     in
     {
+      imports = [ inputs.self.modules.nixos.sops ];
+
       options.mediaMount = {
         group = lib.mkOption {
           type = lib.types.str;
@@ -36,13 +39,21 @@
       config = {
         environment.systemPackages = [ pkgs.cifs-utils ];
 
+        sops.secrets."mars_username".sopsFile = ./secrets.yaml;
+        sops.secrets."mars_password".sopsFile = ./secrets.yaml;
+        # mount.cifs credentials file format
+        sops.templates."mars-credentials".content = ''
+          username=${config.sops.placeholder."mars_username"}
+          password=${config.sops.placeholder."mars_password"}
+        '';
+
         users.groups.${cfg.group} = { gid = cfg.gid; };
 
         fileSystems.${cfg.mountPoint} = {
           device = "//mars/media";
           fsType = "cifs";
           options = [
-            "credentials=/etc/nixos/mars-secrets"
+            "credentials=${config.sops.templates."mars-credentials".path}"
             "nofail"
             "noauto"
             "x-systemd.automount"
