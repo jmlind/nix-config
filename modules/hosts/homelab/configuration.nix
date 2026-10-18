@@ -1,81 +1,45 @@
-{ self, inputs, ... }: {
+{ self, ... }: {
 
-  flake.nixosModules.homelabConfiguration = { pkgs, lib, ... }: {
-    # import any other modules from here
-    imports = [
-      self.modules.nixos.homelabHardware
-      self.modules.nixos.arm
+  flake.nixosModules.homelabConfiguration = { config, ... }: {
+    imports = with self.modules.nixos; [
+      homelabHardware
+      arm
+      nix-settings
     ];
 
-    nix.settings.experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
+    networking.hostName = "homelab";
 
-    # ...any other config typically in configuration.nix
+    # Resolve names (lind.estate, LAN hosts) through telemachus's dnsmasq.
+    networking.nameservers = [ self.homelabHosts.telemachus ];
+
     boot.loader.grub.enable = true;
     boot.loader.grub.device = "/dev/sda";
-    boot.loader.grub.useOSProber = true;
 
-    # Set your time zone.
     time.timeZone = "America/Chicago";
 
-    # Select internationalisation properties.
-    i18n.defaultLocale = "en_US.UTF-8";
-
-    i18n.extraLocaleSettings = {
-      LC_ADDRESS = "en_US.UTF-8";
-      LC_IDENTIFICATION = "en_US.UTF-8";
-      LC_MEASUREMENT = "en_US.UTF-8";
-      LC_MONETARY = "en_US.UTF-8";
-      LC_NAME = "en_US.UTF-8";
-      LC_NUMERIC = "en_US.UTF-8";
-      LC_PAPER = "en_US.UTF-8";
-      LC_TELEPHONE = "en_US.UTF-8";
-      LC_TIME = "en_US.UTF-8";
-    };
-    users.users.homelab = {
-      isNormalUser = true;
-      extraGroups = [
-        "networkmanager"
-        "wheel"
-      ];
-      openssh.authorizedKeys.keys = [
-        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCTrHuvuR8Typ/NdoCxm+mFD4ve+SD5m6HcN3vhN3Fdrzpd2RljsyuJlIz46Opmudqf9BmvbMSQa0FlOpzLLWo2IyosYqMCfduYnWO34Icw29D3DRZrO9mrO8bVPBOlXKUjJ2cxrLewIhFqZVc5sI0of+rv3qNQl5m+novil3QGsjkNTjjqtA5y88XpnKmDK45I7GiaTf52Yzr1d81s5t2ltZcWg4mI/zJqNtv9tNElQ/B+yzSmD/OXL7eBv+8rT51tumLMn/sfVKZ14zSVZM6PpRgpTtJpzUOI6zMHkOJ8wSyd4DkEEth2ENHJ9mnT1Nkjfey0xrUvyjCINkReGJBmARHRCePw2momWKEKNS4bX8oKvTynJir7jmHRlQbjnOt5aa0UN+T4nPPl5bovMCvnUMpHctH7azHlDsk9y1TWWqZGlXrbVi93Lpxa15LHHlkGc6TR12VJ/CS8zsW7CyXg6cQt9Z/C1lwJ/6kySCcYhqeTNpIxgmIF8qbiqB40z3c= laptop@fedora"
-      ];
+    # Deploy with: nixos-rebuild switch --flake .#homelab --target-host root@homelab
+    # The homelab user + passwordless sudo is the fallback login.
+    services.openssh = {
+      enable = true;
+      settings = {
+        PasswordAuthentication = false;
+        PermitRootLogin = "prohibit-password";
+      };
     };
 
     users.users.root.openssh.authorizedKeys.keys = [
       "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCTrHuvuR8Typ/NdoCxm+mFD4ve+SD5m6HcN3vhN3Fdrzpd2RljsyuJlIz46Opmudqf9BmvbMSQa0FlOpzLLWo2IyosYqMCfduYnWO34Icw29D3DRZrO9mrO8bVPBOlXKUjJ2cxrLewIhFqZVc5sI0of+rv3qNQl5m+novil3QGsjkNTjjqtA5y88XpnKmDK45I7GiaTf52Yzr1d81s5t2ltZcWg4mI/zJqNtv9tNElQ/B+yzSmD/OXL7eBv+8rT51tumLMn/sfVKZ14zSVZM6PpRgpTtJpzUOI6zMHkOJ8wSyd4DkEEth2ENHJ9mnT1Nkjfey0xrUvyjCINkReGJBmARHRCePw2momWKEKNS4bX8oKvTynJir7jmHRlQbjnOt5aa0UN+T4nPPl5bovMCvnUMpHctH7azHlDsk9y1TWWqZGlXrbVi93Lpxa15LHHlkGc6TR12VJ/CS8zsW7CyXg6cQt9Z/C1lwJ/6kySCcYhqeTNpIxgmIF8qbiqB40z3c= laptop@fedora"
     ];
 
+    users.users.homelab = {
+      isNormalUser = true;
+      extraGroups = [ "wheel" ];
+      openssh.authorizedKeys.keys = config.users.users.root.openssh.authorizedKeys.keys;
+    };
+
     security.sudo.wheelNeedsPassword = false;
-    security.sudo.enable = false;
 
-    # Allow unfree packages
-    nixpkgs.config.allowUnfree = true;
-
-    networking = {
-      hostName = "homelab";
-      hostId = "ad1f0b4b";
-      firewall.allowedTCPPorts = [ ];
-    };
-
-    # OpenSSH for remote management
-    services.openssh = {
-      enable = true;
-      settings = {
-        PasswordAuthentication = false;
-      };
-    };
-
-    # This value determines the NixOS release from which the default
-    # settings for stateful data, like file locations and database versions
-    # on your system were taken. It‘s perfectly fine and recommended to leave
-    # this value at the release version of the first install of this system.
-    # Before changing this value read the documentation for this option
-    # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-    system.stateVersion = "24.11"; # Did you read the comment?
+    system.stateVersion = "24.11"; # first install; never change
   };
 
 }
