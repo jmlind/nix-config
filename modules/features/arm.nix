@@ -63,7 +63,10 @@
 
       # Mount 'host directory' to 'container directory'
       volumes = [
-        "${config.mediaMount.mountPoint}:/mnt/arm"
+        # Same path inside and out, so arm.yaml paths match the host.
+        # rslave: the share is an automount; let the container see it
+        # when systemd mounts (or remounts) it after the container starts.
+        "${config.mediaMount.mountPoint}:${config.mediaMount.mountPoint}:rslave"
         "/home/arm:/home/arm"
         "/home/arm/music:/home/arm/music"
         "/home/arm/logs:/home/arm/logs"
