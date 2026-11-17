@@ -54,7 +54,7 @@
             "nofail"
             "noauto"
             "x-systemd.automount"
-            "gid=${cfg.group}"
+            "gid=${toString cfg.gid}"
             "file_mode=0664"
             "dir_mode=0775"
           ];
