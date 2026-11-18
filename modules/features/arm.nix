@@ -39,12 +39,7 @@
       ];
     };
 
-    # set up directories with arm user and group ownership.
-    # Z: recursively re-own /home/arm itself. NixOS never chowns an existing
-    # home, so one created under an earlier uid/gid (1001:994) stays that
-    # way and ARM's startup check refuses to run as 1100:1100.
     systemd.tmpfiles.rules = [
-      "Z /home/arm - ${toString config.users.users.arm.uid} ${toString config.mediaMount.gid} -"
       "d /home/arm/logs 0755 arm arm -"
       "d /home/arm/music 0755 arm arm -"
       "d /home/arm/media 0755 arm arm -"
