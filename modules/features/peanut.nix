@@ -7,12 +7,10 @@
     {
       config,
       lib,
-      pkgs,
       ...
     }:
     let
       cfg = config.peanut;
-      envFile = "/run/peanut/nut.env";
     in
     {
       # healthChecks comes from statusPage (or healthEndpoints) in the host's
@@ -22,8 +20,8 @@
       options.peanut = {
         nutHost = lib.mkOption {
           type = lib.types.str;
-          default = "pi301.local";
-          description = "NUT server, resolved on this host (mDNS) at container start.";
+          default = inputs.self.homelabHosts.pi301;
+          description = "NUT server address.";
         };
         upsName = lib.mkOption {
           type = lib.types.str;
@@ -38,36 +36,20 @@
       };
 
       config = {
-        # Resolve *.local names on the host. The container can't do mDNS, so
-        # the host looks the NUT server up and passes the address in.
-        services.avahi = {
-          enable = true;
-          nssmdns4 = true;
-        };
-
         virtualisation.oci-containers.containers.peanut = {
           image = "brandawg93/peanut:6.1.2";
           ports = [ "${toString cfg.port}:8080" ];
           environment = {
             AUTH_DISABLED = "true";
             DISABLE_CONFIG_FILE = "true";
+            NUT_SERVERS = builtins.toJSON [
+              {
+                HOST = cfg.nutHost;
+                PORT = 3493;
+              }
+            ];
           };
-          environmentFiles = [ envFile ];
         };
-
-        # A new address on each start, so a moved Pi only needs a restart.
-        # Fails (and systemd retries) while the NUT server can't be resolved.
-        systemd.services.docker-peanut.wants = [ "avahi-daemon.service" ];
-        systemd.services.docker-peanut.after = [ "avahi-daemon.service" ];
-        systemd.services.docker-peanut.preStart = ''
-          ip=$(${pkgs.getent}/bin/getent ahostsv4 ${cfg.nutHost} | ${pkgs.gawk}/bin/awk 'NR == 1 { print $1 }')
-          if [ -z "$ip" ]; then
-            echo "peanut: cannot resolve ${cfg.nutHost}" >&2
-            exit 1
-          fi
-          mkdir -p ${dirOf envFile}
-          echo "NUT_SERVERS=[{\"HOST\":\"$ip\",\"PORT\":3493}]" > ${envFile}
-        '';
 
         healthChecks = [
           {
