@@ -1,9 +1,8 @@
 { inputs, ... }:
 {
-  # Active ARM rips on the status page. ARM runs on a host that is often
-  # off, so a helper on the status page host asks ARM for its job list and
-  # always answers: the jobs, "No active rips", or "ARM is offline".
-  # statusPage shows the list on the ARM card when this feature is imported.
+  # Active ARM rips on the status page's ARM card. A helper on the status
+  # page host reshapes ARM's job list for homepage and still answers while
+  # the ARM host is off.
   flake.modules.nixos.armRips =
     {
       config,

@@ -1,12 +1,8 @@
 """Serve a random photo from one Immich album, for the status page background.
 
-Each GET picks a new photo (Immich random search, filtered to the album) and
-returns its preview-size image with Cache-Control: no-store, so every page
-load, and every rotation, gets a different one.
-
-Environment: IMMICH_URL, ALBUM_ID, PORT, ALLOW_ORIGIN (the status page,
-whose rotation script fetches this cross-origin); the API key comes from the systemd
-credential "immich-api-key". The key needs asset.read and asset.view.
+Each GET returns a different photo, uncached, so every page load and
+rotation changes it. The API key (asset.read, asset.view) comes from the
+systemd credential "immich-api-key".
 """
 
 import json

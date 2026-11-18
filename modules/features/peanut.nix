@@ -1,8 +1,7 @@
 { inputs, ... }:
 {
-  # PeaNUT: web dashboard for the NUT server that nut-client already watches.
-  # Fully declared here: the container saves no settings (DISABLE_CONFIG_FILE)
-  # and gets no NUT login, so it can read the UPS but never send it commands.
+  # PeaNUT dashboard for the UPS. Configured only from Nix (UI settings are
+  # not saved), and given no NUT login, so it is read-only.
   flake.modules.nixos.peanut =
     {
       config,
@@ -13,8 +12,6 @@
       cfg = config.peanut;
     in
     {
-      # healthChecks comes from statusPage (or healthEndpoints) in the host's
-      # imports, like jellyfin/immich: a second import would declare it twice.
       imports = [ inputs.self.modules.nixos.containers ];
 
       options.peanut = {

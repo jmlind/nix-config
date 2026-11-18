@@ -52,9 +52,7 @@
 
         networking.firewall.allowedTCPPorts = [ 80 443 ]; # 80 only redirects to https
 
-        # Through caddy itself: proves it serves the vhost with a valid cert.
-        # (The admin API on :2019 is localhost-only, so not checkable over
-        # the LAN.) Option from healthEndpoints, via statusPage.
+        # Checked through a vhost, so a bad cert shows as down.
         healthChecks = [
           {
             name = "caddy";

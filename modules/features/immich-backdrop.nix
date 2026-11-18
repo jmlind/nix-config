@@ -1,8 +1,7 @@
 { inputs, ... }:
 {
-  # A random photo from one Immich album at backdrop.<homelabDomain>, used as
-  # the status page background. The host sets `immichBackdrop.albumId`;
-  # statusPage picks the background up when this feature is imported.
+  # Status page background: a random photo from one Immich album. A helper
+  # holds the API key so it never reaches the browser.
   flake.modules.nixos.immichBackdrop =
     {
       config,
@@ -54,7 +53,6 @@
             IMMICH_URL = cfg.immichUrl;
             ALBUM_ID = cfg.albumId;
             PORT = toString cfg.port;
-            # only the status page may read photos cross-origin
             ALLOW_ORIGIN = "https://status.${inputs.self.homelabDomain}";
           };
           serviceConfig = {

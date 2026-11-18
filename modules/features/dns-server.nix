@@ -1,8 +1,7 @@
 { self, lib, ... }:
 let
   domain = "lind.estate";
-  # Every name below resolves to the proxy host, whose caddy forwards it to
-  # `host`:`port`. Add a service here by hand; nothing else declares names.
+  # Single table of web names: dnsmasq and caddy both read it.
   proxyHost = "telemachus";
   services = {
     status = { host = "telemachus"; port = 8082; };

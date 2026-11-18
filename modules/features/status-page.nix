@@ -9,16 +9,14 @@
     }:
     let
       domain = self.homelabDomain;
-      # Disk widget for the NAS share when this host mounts it (nas-media,
-      # e.g. via jellyfin). Not imported here: nas-media has no module key,
-      # so a second import would declare its options twice.
+      # Extras that appear when the host also imports the matching feature.
+      # Detected with `options ?`, not imported: these modules have no key,
+      # so a second import would declare their options twice.
       mediaMount = lib.optionalString (options ? mediaMount) config.mediaMount.mountPoint;
 
-      # Rotating background when the host also imports immichBackdrop.
       backdrop = lib.optionalString (options ? immichBackdrop) config.immichBackdrop.url;
       rotateMinutes = 5;
 
-      # Active rips on the ARM card when the host also imports armRips.
       ripsWidget = lib.optionalAttrs (options ? armRips) {
         ${config.armRips.card} = {
           type = "customapi";
@@ -38,8 +36,7 @@
       hostRank = node: (if node.config.networking.hostName == ownHost then "0" else "1") + node.config.networking.hostName;
       nodes = lib.sort (a: b: hostRank a < hostRank b) (lib.attrValues self.nixosConfigurations);
 
-      # Icons live in the repo (./status-page/icons) and are served by
-      # homepage itself from /icons/<file>, so the page loads no CDN assets.
+      # Icons are vendored and served by homepage itself: no CDN.
       iconDir = ./status-page/icons;
       icon =
         file:
@@ -80,9 +77,8 @@
               --prefix PATH : ${lib.makeBinPath [ pkgs.unixtools.ping ]}
           '';
 
-      # One homepage group per host, holding that host's healthChecks.
-      # `localhost` becomes the host's LAN address, since this one page
-      # checks every host's services.
+      # One group per host. `localhost` becomes the host's LAN address,
+      # since this one page checks every host.
       groups = lib.concatMap (
         node:
         let
@@ -138,9 +134,7 @@
           hideVersion = true;
         }
         // lib.optionalAttrs (backdrop != "") {
-          # opacity is how much photo shows through homepage's dark overlay
-          # (100 = no overlay); with cardBlur, text stays readable on bright
-          # photos.
+          # Dimmed and blurred so text stays readable on bright photos.
           background = {
             image = backdrop;
             blur = "sm";
