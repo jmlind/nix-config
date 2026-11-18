@@ -99,11 +99,11 @@ VM checks answer "does this evaluate and boot"; they say nothing about a
 shared `healthChecks` option (`modules/features/health-endpoints.nix`), and
 `modules/features/status-page.nix` collects `healthChecks` from **every**
 host in `self.nixosConfigurations` — not just the host it runs on — into
-one [gatus](https://github.com/TwiN/gatus) dashboard behind its own Caddy
-vhost, sectioned by host via gatus's `group` field. gatus was chosen over
-something like Uptime Kuma because it's configured entirely from Nix (a
-plain endpoint list) rather than through its own UI/DB, so it fits a
-git-checked-in flake:
+one [homepage](https://gethomepage.dev) dashboard behind its own Caddy
+vhost, one section per host. homepage replaced gatus because it can show
+values on the page (NAS used/total), not only up/down; like gatus, it is
+configured entirely from Nix rather than through its own UI/DB, so it fits
+a git-checked-in flake:
 
 ```nix
 # modules/features/jellyfin.nix
@@ -115,7 +115,7 @@ flake.modules.nixos.jellyfin = { ... }: {
 };
 ```
 
-A host gets the *whole* dashboard — the `healthChecks` option, gatus
+A host gets the *whole* dashboard — the `healthChecks` option, homepage
 itself, and its Caddy vhost — from **one** import:
 
 ```nix
@@ -141,11 +141,15 @@ one line to that table. Only telemachus runs Caddy.
 
 Each host's real LAN address comes from `modules/network.nix`
 (`self.homelabHosts`) — `statusPage` rewrites each check's `localhost` to
-that host's address, since one gatus instance now reaches every host's
+that host's address, since one homepage instance reaches every host's
 services (jellyfin/immich already set `openFirewall = true`, so this works
-over the LAN as-is). `healthChecks` entries are gatus endpoints — `url` can
-be `http://...` (HTTP check) or `tcp://host:port` (plain connectivity
-check, e.g. `dns-server`'s dnsmasq). Not every feature has a meaningful
+over the LAN as-is). A `healthChecks` entry is `{ name; url; }`: an
+`http://...` url becomes a homepage `siteMonitor` (HTTP check, response
+time on the card); a `tcp://host:port` url only pings the host, since
+homepage has no TCP port check (e.g. `dns-server`). A check whose `name` is
+also in `homelabServices` links to `https://<name>.lind.estate`. When the
+host mounts the NAS (`nas-media`), the page also shows a disk widget for
+the share. Not every feature has a meaningful
 health check to register (e.g. `nut-client` only watches a UPS elsewhere on
 the network) — that's fine, it's opt-in per feature.
 

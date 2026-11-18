@@ -5,7 +5,7 @@ let
   # `host`:`port`. Add a service here by hand; nothing else declares names.
   proxyHost = "telemachus";
   services = {
-    status = { host = "telemachus"; port = 8080; };
+    status = { host = "telemachus"; port = 8082; };
     jellyfin = { host = "telemachus"; port = 8096; };
     immich = { host = "telemachus"; port = 2283; };
     arm = { host = "homelab"; port = 8080; };
@@ -32,7 +32,6 @@ in
       {
         name = "dns-server";
         url = "tcp://localhost:53";
-        conditions = [ "[CONNECTED] == true" ];
       }
     ];
   };
