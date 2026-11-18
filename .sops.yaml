@@ -1,0 +1,6 @@
+keys:
+  - &jmlind age1j68r666jdchee0wnlr9779dqxvlvcfvr0h4gnazdfwl5c2gyayjs5c023q
+creation_rules:
+  - path_regex: ^.*$
+    age:
+      - *jmlind
