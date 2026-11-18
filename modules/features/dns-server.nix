@@ -10,6 +10,7 @@ let
     immich = { host = "telemachus"; port = 2283; };
     arm = { host = "homelab"; port = 8080; };
     backdrop = { host = "telemachus"; port = 2284; }; # immichBackdrop
+    peanut = { host = "telemachus"; port = 8083; };
   };
 in
 {

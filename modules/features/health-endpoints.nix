@@ -31,6 +31,15 @@
                   host (homepage has no TCP port check).
                 '';
               };
+              widget = lib.mkOption {
+                type = lib.types.nullOr (lib.types.attrsOf lib.types.anything);
+                default = null;
+                description = ''
+                  homepage service widget shown on the card, e.g.
+                  { type = "peanut"; url = "http://localhost:8083"; key = "ups"; }.
+                  `localhost` in its url becomes this host's LAN address.
+                '';
+              };
             };
           }
         );

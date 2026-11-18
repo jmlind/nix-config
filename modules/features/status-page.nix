@@ -91,7 +91,8 @@
           toService =
             hc:
             let
-              url = lib.replaceStrings [ "localhost" ] [ self.homelabHosts.${hostName} ] hc.url;
+              toLan = lib.replaceStrings [ "localhost" ] [ self.homelabHosts.${hostName} ];
+              url = toLan hc.url;
             in
             {
               ${hc.name} =
@@ -106,6 +107,9 @@
                 }
                 // lib.optionalAttrs (hc.icon != null) { icon = icon hc.icon; }
                 // lib.optionalAttrs (hc.description != null) { inherit (hc) description; }
+                // lib.optionalAttrs (hc.widget != null) {
+                  widget = hc.widget // lib.optionalAttrs (hc.widget ? url) { url = toLan hc.widget.url; };
+                }
                 // lib.optionalAttrs (ripsWidget ? ${hc.name}) { widget = ripsWidget.${hc.name}; };
             };
         in
