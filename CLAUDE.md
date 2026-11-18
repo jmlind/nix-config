@@ -152,7 +152,11 @@ also in `homelabServices` links to `https://<name>.lind.estate`. Optional
 fill out the card; icons are served by homepage itself, so the page loads
 nothing from a CDN. When the
 host mounts the NAS (`nas-media`), the page also shows a disk widget for
-the share. Not every feature has a meaningful
+the share. When the host imports `immichBackdrop` (and sets
+`immichBackdrop.albumId`), the background is a random photo from that
+Immich album, served at `backdrop.lind.estate` by a small helper that holds
+the `immich_api_key` sops secret (Immich permissions `asset.read`,
+`asset.view`); the page swaps in a new photo every few minutes. Not every feature has a meaningful
 health check to register (e.g. `nut-client` only watches a UPS elsewhere on
 the network) — that's fine, it's opt-in per feature.
 

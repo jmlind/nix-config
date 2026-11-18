@@ -9,6 +9,7 @@ let
     jellyfin = { host = "telemachus"; port = 8096; };
     immich = { host = "telemachus"; port = 2283; };
     arm = { host = "homelab"; port = 8080; };
+    backdrop = { host = "telemachus"; port = 2284; }; # immichBackdrop
   };
 in
 {

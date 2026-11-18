@@ -14,6 +14,10 @@
       # so a second import would declare its options twice.
       mediaMount = lib.optionalString (options ? mediaMount) config.mediaMount.mountPoint;
 
+      # Rotating background when the host also imports immichBackdrop.
+      backdrop = lib.optionalString (options ? immichBackdrop) config.immichBackdrop.url;
+      rotateMinutes = 5;
+
       # Icons live in the repo (./status-page/icons) and are served by
       # homepage itself from /icons/<file>, so the page loads no CDN assets.
       iconDir = ./status-page/icons;
@@ -107,6 +111,21 @@
           statusStyle = "dot";
           useEqualHeights = true;
           hideVersion = true;
+        }
+        // lib.optionalAttrs (backdrop != "") {
+          # opacity is how much photo shows through homepage's dark overlay
+          # (100 = no overlay); with cardBlur, text stays readable on bright
+          # photos.
+          background = {
+            image = backdrop;
+            blur = "sm";
+            brightness = 80;
+            saturate = 80;
+            opacity = 45;
+          };
+          cardBlur = "md";
+        }
+        // {
           layout = lib.genAttrs (lib.concatMap lib.attrNames groups) (_: {
             style = "row";
             columns = 3;
@@ -115,6 +134,24 @@
         };
         customCSS = ''
           html { font-size: 18px; }
+        '';
+        # Each backdrop request is a new random photo. Fetch it once as a blob
+        # (a preload plus a CSS url() would be two requests, two photos), then
+        # swap it into the background layer homepage draws in #background.
+        customJS = lib.optionalString (backdrop != "") ''
+          setInterval(async () => {
+            const bg = document.getElementById("background");
+            if (!bg) return;
+            try {
+              const res = await fetch("${backdrop}", { cache: "no-store" });
+              if (!res.ok) return;
+              const url = URL.createObjectURL(await res.blob());
+              const old = bg.dataset.backdrop;
+              bg.style.backgroundImage = bg.style.backgroundImage.replace(/url\([^)]*\)/, `url("''${url}")`);
+              bg.dataset.backdrop = url;
+              if (old) URL.revokeObjectURL(old);
+            } catch (e) {}
+          }, ${toString rotateMinutes} * 60 * 1000);
         '';
         widgets = [
           {
