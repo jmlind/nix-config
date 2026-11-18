@@ -11,6 +11,7 @@
       nix-settings
       statusPage
       immichBackdrop
+      armRips
     ];
 
     networking.hostName = "telemachus";

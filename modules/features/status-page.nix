@@ -18,6 +18,26 @@
       backdrop = lib.optionalString (options ? immichBackdrop) config.immichBackdrop.url;
       rotateMinutes = 5;
 
+      # Active rips on the ARM card when the host also imports armRips.
+      ripsWidget = lib.optionalAttrs (options ? armRips) {
+        ${config.armRips.card} = {
+          type = "customapi";
+          url = "http://127.0.0.1:${toString config.armRips.port}/";
+          display = "dynamic-list";
+          refreshInterval = 10000;
+          mappings = {
+            items = "jobs";
+            name = "title";
+            label = "status";
+          };
+        };
+      };
+
+      # This host's own section first, then the others by name.
+      ownHost = config.networking.hostName;
+      hostRank = node: (if node.config.networking.hostName == ownHost then "0" else "1") + node.config.networking.hostName;
+      nodes = lib.sort (a: b: hostRank a < hostRank b) (lib.attrValues self.nixosConfigurations);
+
       # Icons live in the repo (./status-page/icons) and are served by
       # homepage itself from /icons/<file>, so the page loads no CDN assets.
       iconDir = ./status-page/icons;
@@ -85,11 +105,12 @@
                   href = "https://${hc.name}.${domain}";
                 }
                 // lib.optionalAttrs (hc.icon != null) { icon = icon hc.icon; }
-                // lib.optionalAttrs (hc.description != null) { inherit (hc) description; };
+                // lib.optionalAttrs (hc.description != null) { inherit (hc) description; }
+                // lib.optionalAttrs (ripsWidget ? ${hc.name}) { widget = ripsWidget.${hc.name}; };
             };
         in
         lib.optional (checks != [ ]) { ${hostName} = map toService checks; }
-      ) (lib.attrValues self.nixosConfigurations);
+      ) nodes;
     in
     {
       imports = [
@@ -126,11 +147,15 @@
           cardBlur = "md";
         }
         // {
-          layout = lib.genAttrs (lib.concatMap lib.attrNames groups) (_: {
-            style = "row";
-            columns = 3;
-            icon = icon "server.svg";
-          });
+          # A list, not an attrset: homepage orders sections by layout, and
+          # an attrset would sort them by name.
+          layout = map (name: {
+            ${name} = {
+              style = "row";
+              columns = 3;
+              icon = icon "server.svg";
+            };
+          }) (lib.concatMap lib.attrNames groups);
         };
         customCSS = ''
           html { font-size: 18px; }

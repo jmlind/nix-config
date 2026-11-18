@@ -156,7 +156,11 @@ the share. When the host imports `immichBackdrop` (and sets
 `immichBackdrop.albumId`), the background is a random photo from that
 Immich album, served at `backdrop.lind.estate` by a small helper that holds
 the `immich_api_key` sops secret (Immich permissions `asset.read`,
-`asset.view`); the page swaps in a new photo every few minutes. Not every feature has a meaningful
+`asset.view`); the page swaps in a new photo every few minutes. When the
+host imports `armRips`, the `arm` card lists ARM's active rips (title,
+stage, progress, ETA) through a small helper on the status page host, which
+shows "ARM is offline" while homelab is off. Sections are ordered with the
+status page's own host first. Not every feature has a meaningful
 health check to register (e.g. `nut-client` only watches a UPS elsewhere on
 the network) — that's fine, it's opt-in per feature.
 
