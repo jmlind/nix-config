@@ -66,7 +66,3 @@ Decisions:
 ## Secrets
 
 sops-nix with one age key, shared by the hosts; see `secrets.md`.
-
-## Notes
-
-- `old/` holds the pre-rewrite config for reference; not part of the flake.
