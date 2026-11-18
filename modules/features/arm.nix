@@ -25,6 +25,8 @@
       {
         name = "arm";
         url = "http://localhost:8080";
+        icon = "disc-player.svg";
+        description = "Disc ripping";
       }
     ];
 

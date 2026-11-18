@@ -17,6 +17,8 @@
       {
         name = "immich";
         url = "http://localhost:2283/api/server/ping";
+        icon = "immich.png";
+        description = "Photos";
       }
     ];
   };

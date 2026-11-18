@@ -13,6 +13,16 @@
                   `homelabServices` links to https://<name>.<homelabDomain>.
                 '';
               };
+              icon = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = "File name in modules/features/status-page/icons, e.g. \"jellyfin.png\".";
+              };
+              description = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = "Second line on the service card, e.g. \"Media server\".";
+              };
               url = lib.mkOption {
                 type = lib.types.str;
                 description = ''

@@ -147,7 +147,10 @@ over the LAN as-is). A `healthChecks` entry is `{ name; url; }`: an
 `http://...` url becomes a homepage `siteMonitor` (HTTP check, response
 time on the card); a `tcp://host:port` url only pings the host, since
 homepage has no TCP port check (e.g. `dns-server`). A check whose `name` is
-also in `homelabServices` links to `https://<name>.lind.estate`. When the
+also in `homelabServices` links to `https://<name>.lind.estate`. Optional
+`icon` (a file in `modules/features/status-page/icons/`) and `description`
+fill out the card; icons are served by homepage itself, so the page loads
+nothing from a CDN. When the
 host mounts the NAS (`nas-media`), the page also shows a disk widget for
 the share. Not every feature has a meaningful
 health check to register (e.g. `nut-client` only watches a UPS elsewhere on

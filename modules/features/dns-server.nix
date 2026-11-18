@@ -32,6 +32,8 @@ in
       {
         name = "dns-server";
         url = "tcp://localhost:53";
+        icon = "dns.svg";
+        description = "dnsmasq for lind.estate";
       }
     ];
   };
