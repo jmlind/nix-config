@@ -147,15 +147,7 @@
             disk = mediaMount;
             expanded = true;
           };
-        }
-        ++ [
-          {
-            search = {
-              provider = "duckduckgo";
-              target = "_blank";
-            };
-          }
-        ];
+        };
         services = groups;
       };
 
