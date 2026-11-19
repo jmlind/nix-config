@@ -20,6 +20,8 @@
       {
         name = "jellyfin";
         url = "http://localhost:8096/health";
+        icon = "jellyfin.png";
+        description = "Media server";
       }
     ];
   };

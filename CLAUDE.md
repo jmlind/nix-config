@@ -1,171 +1,68 @@
 # nix-config
 
-Personal nix-darwin/NixOS flake, structured with the **dendritic pattern**:
-every file is a `flake-parts` module, and every file contributes to the flake
-by *merging* into shared options rather than being manually imported/wired
-together in a central place.
+Personal NixOS flake built on the **dendritic pattern**: every file is a
+`flake-parts` module that merges into shared options, instead of being wired
+together in one central place.
 
-## How it's wired
+## Structure
 
-`flake.nix` is a thin bootstrap:
+`flake.nix` only bootstraps: `import-tree` imports every `.nix` file under
+`modules/`, and `flake-parts.flakeModules.modules` provides the
+`flake.modules.<class>.<name>` namespace they write into. Adding a file is
+enough to wire it in.
 
-```nix
-imports = [
-  inputs.flake-parts.flakeModules.modules  # gives us flake.modules.<class>.<name>
-  (inputs.import-tree ./modules)           # auto-imports every .nix file under modules/
-];
-```
+- **Features** (`modules/features/`): one file per feature, each defining
+  `flake.modules.nixos.<name>`. Features are independent and may declare
+  their own options.
+- **Hosts** (`modules/hosts/<name>/`): `configuration.nix` imports features
+  by name and sets host-specific values; `default.nix` builds the
+  `nixosConfiguration`; the hardware config is itself a feature.
 
-- `import-tree` walks `./modules` and imports **every** `.nix` file it finds
-  as a flake-parts module. There is no manual list of imports to maintain —
-  dropping a new file into `modules/` is enough to wire it in.
-- `flake-parts.flakeModules.modules` declares the `flake.modules.<class>.<name>`
-  option, which is the shared namespace all the feature files write into.
+So per host: pick features by name, set host values, build.
 
-## The pattern: features as named modules
+### Decisions
 
-Each "feature" is its own file under `modules/features/`, and it declares
-itself as an entry in `flake.modules.nixos.<name>`:
+- Prefer small, single-purpose feature files; the pattern's value is that
+  features compose independently.
+- A feature imports what it depends on (e.g. `jellyfin` imports
+  `nas-media`). These modules have no key, so importing one twice in the
+  same host declares its options twice. Where two features share a
+  dependency, the host gets it from one place (e.g. `statusPage` provides
+  `healthEndpoints`), and optional integrations are detected with
+  `options ? <name>` instead of imported.
+- Shared facts live in one flake-level table each: `homelabHosts`
+  (`modules/network.nix`, LAN addresses) and `homelabServices` plus
+  `homelabDomain` (`modules/features/dns-server.nix`, web names). Fixed IPs
+  over mDNS: containers can't resolve `.local`.
 
-```nix
-# modules/features/caddy.nix
-{
-  flake.modules.nixos.caddy = { pkgs, config, ... }: {
-    services.caddy = { ... };
-  };
-}
-```
+## Web services and DNS
 
-This is just a plain NixOS module value living at
-`flake.modules.nixos.caddy` — nothing imports it yet. Because these are
-independent files that only *add* an attribute to a shared set, they compose
-for free: any number of feature files can exist side by side with zero
-coordination between them, and each one is independently readable/deletable.
+telemachus runs dnsmasq and Caddy. Every name in `homelabServices`
+resolves to telemachus, and Caddy proxies it to `host:port`. Adding a web
+service is one line in that table.
 
-Features that need their own options (e.g. disko layout, needing a
-per-host disk path) define an `options.*` block and read it via `config` —
-same as any NixOS module:
+Vhosts get real certificates through Porkbun DNS-01, so nothing needs to be
+reachable from the internet. Access is still limited to the LAN inside
+Caddy (`remote_ip`), not only by the firewall.
 
-```nix
-# modules/features/disko-gpt-lvm.nix
-{
-  flake.modules.nixos.diskoGptLvm = { config, lib, ... }: {
-    options.diskoConfig.primaryDisk = lib.mkOption { type = lib.types.str; };
-    config.disko.devices = { ... };  # uses config.diskoConfig.primaryDisk
-  };
-}
-```
+## Status page
 
-## Hosts: opting into features
+`statusPage` (telemachus) runs a [homepage](https://gethomepage.dev)
+dashboard at `status.lind.estate`. Features register entries in a shared
+`healthChecks` option, and the page collects them from **every** host in
+`self.nixosConfigurations`, one section per host. A new host appears on the
+page once it registers checks and has an entry in `homelabHosts`.
 
-A host is where features actually get pulled together. Each host under
-`modules/hosts/<name>/` has:
+Decisions:
 
-- `configuration.nix` — builds `flake.nixosModules.<name>Configuration` by
-  `imports`-ing the feature names it wants out of `self.modules.nixos`:
+- homepage replaced gatus: it shows values (NAS usage, UPS charge, active
+  rips), not only up/down, and is still configured entirely from Nix.
+- Icons are vendored in `status-page/icons/`; the page loads nothing from a
+  CDN.
+- Data homepage can't read directly goes through a small helper on
+  telemachus: `armRips` (ARM's job list, and ARM's host is often off) and
+  `immichBackdrop` (keeps the Immich API key out of the browser).
 
-  ```nix
-  # modules/hosts/telemachus/configuration.nix
-  flake.nixosModules.telemachusConfiguration = { pkgs, lib, ... }: {
-    imports = with self.modules.nixos; [
-      telemachusHardware
-      jellyfin
-      immich
-      diskoGptLvm
-      nix-settings
-    ];
-    diskoConfig.primaryDisk = "/dev/nvme0n1";  # host-specific option values
-    system.stateVersion = "24.05";
-    # ... other host-specific settings
-  };
-  ```
+## Secrets
 
-- `default.nix` — turns that module into an actual
-  `flake.nixosConfigurations.<name>` via `nixpkgs.lib.nixosSystem`.
-- `hardware-configuration.nix` — the standard generated hardware module,
-  itself registered as a feature (`self.modules.nixos.<name>Hardware`) so it
-  can be imported the same way as everything else.
-
-So the flow per host is: **pick features by name → set host-specific option
-values → build the system.** Adding a new feature to a host is a one-line
-addition to that host's `imports` list; adding a brand new feature to the
-repo is just a new file in `modules/features/` that nothing else has to
-touch.
-
-## Live health: one status page, aggregated across hosts
-
-VM checks answer "does this evaluate and boot"; they say nothing about a
-*running* host. For that, features self-register a health check into a
-shared `healthChecks` option (`modules/features/health-endpoints.nix`), and
-`modules/features/status-page.nix` collects `healthChecks` from **every**
-host in `self.nixosConfigurations` — not just the host it runs on — into
-one [gatus](https://github.com/TwiN/gatus) dashboard behind its own Caddy
-vhost, sectioned by host via gatus's `group` field. gatus was chosen over
-something like Uptime Kuma because it's configured entirely from Nix (a
-plain endpoint list) rather than through its own UI/DB, so it fits a
-git-checked-in flake:
-
-```nix
-# modules/features/jellyfin.nix
-flake.modules.nixos.jellyfin = { ... }: {
-  services.jellyfin.enable = true;
-  # option declared by `healthEndpoints`, pulled in transitively by
-  # whatever host also imports `statusPage` — see below
-  healthChecks = [{ name = "jellyfin"; url = "http://localhost:8096/health"; }];
-};
-```
-
-A host gets the *whole* dashboard — the `healthChecks` option, gatus
-itself, and its Caddy vhost — from **one** import:
-
-```nix
-# modules/hosts/telemachus/configuration.nix
-imports = with self.modules.nixos; [
-  jellyfin immich nut-client
-  statusPage  # self-imports healthEndpoints + caddy; see below
-];
-```
-
-`statusPage` self-imports its two dependencies (`healthEndpoints`, `caddy`)
-the same way `jellyfin` self-imports `nas-media` — the host only ever names
-the one feature it actually wants.
-
-Web names are written down by hand in one table in
-`modules/features/dns-server.nix` (`flake.homelabServices`: name to
-`{ host; port; }`, plus `flake.homelabDomain`). dnsmasq points every
-`<name>.lind.estate` at telemachus, and telemachus's `caddy` reads the same
-table to serve each name LAN-only and proxy it to `host:port` (`localhost`
-for its own services, the host's LAN IP otherwise, e.g. `arm` on homelab).
-Features declare nothing about DNS or proxying; adding a service means adding
-one line to that table. Only telemachus runs Caddy.
-
-Each host's real LAN address comes from `modules/network.nix`
-(`self.homelabHosts`) — `statusPage` rewrites each check's `localhost` to
-that host's address, since one gatus instance now reaches every host's
-services (jellyfin/immich already set `openFirewall = true`, so this works
-over the LAN as-is). `healthChecks` entries are gatus endpoints — `url` can
-be `http://...` (HTTP check) or `tcp://host:port` (plain connectivity
-check, e.g. `dns-server`'s dnsmasq). Not every feature has a meaningful
-health check to register (e.g. `nut-client` only watches a UPS elsewhere on
-the network) — that's fine, it's opt-in per feature.
-
-Adding a new host to the dashboard needs no changes to `statusPage`
-itself — the moment that host has any feature registering `healthChecks`
-and an entry in `self.homelabHosts`, its checks appear on telemachus's
-page, grouped under its own hostname (it still needs `healthEndpoints` —
-or `statusPage` — in its own imports for `healthChecks` to be a valid
-option to set at all).
-
-The dashboard is served at `status.lind.estate`, kept LAN-only even though it gets a real cert:
-`caddy.nix`'s porkbun DNS-01 challenge proves domain ownership without
-needing 80/443 reachable from the internet, so the hostname resolves with
-valid TLS while access is still gated inside Caddy (`remote_ip` matcher),
-not just left to the firewall.
-
-## Notes
-
-- `old/` holds the pre-rewrite, non-dendritic config for reference during
-  the migration — not part of the active flake.
-- Prefer small, single-purpose feature files over grouping unrelated config
-  together; the pattern's value comes from features being independently
-  composable.
+sops-nix with one age key, shared by the hosts; see `secrets.md`.

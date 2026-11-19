@@ -3,30 +3,35 @@
     imports = [
       inputs.self.modules.nixos.nas-media
       inputs.self.modules.nixos.containers
+      inputs.self.modules.nixos.healthEndpoints
     ];
 
-    # pkgs
     environment.systemPackages = [
       pkgs.lsscsi
       pkgs.libdvdread
     ];
 
-    # Load the 'sg' kernel module to allow the container to see disk drives
+    # sg + udev let the container see the optical drive.
     boot.kernelModules = [ "sg" ];
-
-    # Enable udev to allow the container to see disk drives and other devices
     services.udev.enable = true;
 
-    # Open port 8080 for the web UI of the container
     networking.firewall.allowedTCPPorts = [ 8080 ];
 
-    # Mount the NAS media share under its own 'arm' group/gid, dedicated to
-    # this container rather than shared with the rest of nas-media's users.
+    healthChecks = [
+      {
+        name = "arm";
+        url = "http://localhost:8080";
+        icon = "disc-player.svg";
+        description = "Disc ripping";
+      }
+    ];
+
+    # The NAS share is mounted under arm's own group, dedicated to this container.
     mediaMount.group = "arm";
     mediaMount.gid = 1100;
 
-    # Create a user 'arm' for the container; set the password with `passwd`
-    # (its group is created by nas-media, above, from mediaMount.group/gid)
+    # Fixed uid/gid: ARM_UID/ARM_GID and the mount must agree across rebuilds.
+    # Set the password with `passwd`.
     users.users.arm = {
       isNormalUser = true;
       description = "arm";
@@ -39,25 +44,22 @@
       ];
     };
 
-    # set up directories with arm user and group ownership.
     systemd.tmpfiles.rules = [
       "d /home/arm/logs 0755 arm arm -"
       "d /home/arm/music 0755 arm arm -"
       "d /home/arm/media 0755 arm arm -"
       "d /home/arm/config 0755 arm arm -"
     ];
-    # Configure the ARM container
+
     virtualisation.oci-containers.containers."arm" = {
-      autoStart = true; # Automatically start the container on boot
+      autoStart = true;
       image = "automaticrippingmachine/automatic-ripping-machine:2.24.0";
       ports = [ "8080:8080" ];
-      # TODO: Use id arm to get the UID and GID for the arm user after creation
       environment = {
         ARM_UID = toString config.users.users.arm.uid;
         ARM_GID = toString config.mediaMount.gid;
       };
 
-      # Mount 'host directory' to 'container directory'
       volumes = [
         "${config.mediaMount.mountPoint}:/mnt/arm"
         "/home/arm:/home/arm"
@@ -67,12 +69,10 @@
         "/home/arm/config:/etc/arm/config"
       ];
       extraOptions = [
-        "--device=/dev/sr0:/dev/sr0" # Pass through the CD/DVD drive
+        "--device=/dev/sr0:/dev/sr0"
         #"--device=/dev/dri:/dev/dri"
-        "--privileged" # Run the container in privileged mode
-        # The container has no "mediaMount.group" entry of its own, so
-        # docker can't resolve that name via --group-add; pass the group's
-        # (static) gid instead, which needs no /etc/group lookup.
+        "--privileged"
+        # Numeric gid: the group name doesn't exist inside the container.
         "--group-add=${toString config.mediaMount.gid}"
       ];
 

@@ -12,7 +12,7 @@
       mode = "netclient";
 
       upsmon.monitor."ups" = {
-        system = "ups@pi301.local";
+        system = "ups@${inputs.self.homelabHosts.pi301}";
         powerValue = 1;
         user = "observer";
         passwordFile = config.sops.secrets."nut_observer_password".path;

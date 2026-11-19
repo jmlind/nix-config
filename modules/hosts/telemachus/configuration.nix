@@ -10,11 +10,16 @@
       diskoGptLvm
       nix-settings
       statusPage
+      immichBackdrop
+      armRips
+      peanut
     ];
 
     networking.hostName = "telemachus";
 
     diskoConfig.primaryDisk = "/dev/nvme0n1";
+
+    immichBackdrop.albumId = "38d8fc4e-40c0-4bf1-bbfc-50299b6df2fb";
 
     nix.settings.experimental-features = [
       "nix-command"

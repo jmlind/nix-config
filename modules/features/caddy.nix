@@ -51,6 +51,16 @@
         };
 
         networking.firewall.allowedTCPPorts = [ 80 443 ]; # 80 only redirects to https
+
+        # Checked through a vhost, so a bad cert shows as down.
+        healthChecks = [
+          {
+            name = "caddy";
+            url = "https://status.${inputs.self.homelabDomain}";
+            icon = "caddy.png";
+            description = "Reverse proxy";
+          }
+        ];
       };
     };
 }
