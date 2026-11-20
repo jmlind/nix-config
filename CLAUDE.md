@@ -66,3 +66,12 @@ Decisions:
 ## Secrets
 
 sops-nix with one age key, shared by the hosts; see `secrets.md`.
+
+## Remote access
+
+`tailscale` (telemachus) joins a Tailscale tailnet (free Personal plan) as
+a subnet router for `192.168.1.0/24`. Remote devices reach LAN addresses
+directly, and `lind.estate` through split DNS to telemachus's dnsmasq.
+Caddy's allow list is `caddyAccess.allowedRanges`; `tailscale` adds the
+tailnet range to it. Login and route approval are one-time manual steps,
+listed in `modules/features/tailscale.nix`.

@@ -13,6 +13,7 @@
       immichBackdrop
       armRips
       peanut
+      tailscale
     ];
 
     networking.hostName = "telemachus";

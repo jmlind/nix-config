@@ -8,7 +8,18 @@
     }:
     {
       imports = [ inputs.self.modules.nixos.porkbun-secrets ];
+
+      options.caddyAccess.allowedRanges = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        description = ''
+          Client address ranges every vhost accepts; others get 403. Other
+          features append to it (e.g. tailscale adds its tailnet range).
+        '';
+      };
+
       config = {
+        caddyAccess.allowedRanges = [ "192.168.1.0/24" "127.0.0.1" ];
+
         services.caddy = {
           enable = true;
           package = pkgs.caddy.withPlugins {
@@ -31,7 +42,8 @@
             }
           '';
 
-          # The service table lives in dns-server.nix; every vhost is LAN-only.
+          # The service table lives in dns-server.nix; every vhost is limited to
+          # caddyAccess.allowedRanges.
           virtualHosts = lib.mapAttrs' (
             name: svc:
             let
@@ -40,8 +52,8 @@
             in
             lib.nameValuePair "${name}.${inputs.self.homelabDomain}" {
               extraConfig = ''
-                @lan remote_ip 192.168.1.0/24 127.0.0.1
-                handle @lan {
+                @allowed remote_ip ${lib.concatStringsSep " " config.caddyAccess.allowedRanges}
+                handle @allowed {
                   reverse_proxy ${upstream}:${toString svc.port}
                 }
                 respond 403
