@@ -66,3 +66,11 @@ Decisions:
 ## Secrets
 
 sops-nix with one age key, shared by the hosts; see `secrets.md`.
+
+## Incus (POC)
+
+`incus` (telemachus) runs Incus with its web UI at
+`https://192.168.1.190:8443`, LAN only. It is not behind Caddy: the UI
+logs in with a TLS client certificate, which a proxy would terminate.
+A oneshot creates VM `poc` once from the `medium` profile (2 vCPU, 4 GiB);
+after that the VM is managed in the UI, not in Nix.
