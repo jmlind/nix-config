@@ -48,7 +48,7 @@ Caddy (`remote_ip`), not only by the firewall.
 ## Status page
 
 `statusPage` (telemachus) runs a [homepage](https://gethomepage.dev)
-dashboard at `status.lind.estate`. Features register entries in a shared
+dashboard at `status.lindacres.com`. Features register entries in a shared
 `healthChecks` option, and the page collects them from **every** host in
 `self.nixosConfigurations`, one section per host. A new host appears on the
 page once it registers checks and has an entry in `homelabHosts`.

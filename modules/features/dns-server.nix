@@ -1,6 +1,6 @@
 { self, lib, ... }:
 let
-  domain = "lind.estate";
+  domain = "lindacres.com";
   # Single table of web names: dnsmasq and caddy both read it.
   proxyHost = "telemachus";
   services = {
@@ -34,7 +34,7 @@ in
         name = "dns-server";
         url = "tcp://localhost:53";
         icon = "dns.svg";
-        description = "dnsmasq for lind.estate";
+        description = "dnsmasq for lindacres.com";
       }
     ];
   };

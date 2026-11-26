@@ -9,7 +9,7 @@
 
     networking.hostName = "homelab";
 
-    # Resolve names (lind.estate, LAN hosts) through telemachus's dnsmasq.
+    # Resolve names through telemachus's dnsmasq.
     networking.nameservers = [ self.homelabHosts.telemachus ];
 
     boot.loader.grub.enable = true;
