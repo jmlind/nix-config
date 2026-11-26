@@ -20,6 +20,21 @@
         "type": "github"
       }
     },
+    "flake-compat": {
+      "locked": {
+        "lastModified": 1767039857,
+        "narHash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
@@ -84,12 +99,66 @@
         "type": "github"
       }
     },
+    "nixpkgs-libvncserver": {
+      "locked": {
+        "lastModified": 1750111231,
+        "narHash": "sha256-3a7Tha/RwYlzH/v3PJrG7+HjOj4c6YOv2K8sqdGsHVQ=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e6f23dc08d3624daab7094b701aa3954923c6bbb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e6f23dc08d3624daab7094b701aa3954923c6bbb",
+        "type": "github"
+      }
+    },
+    "nixpkgs-stable": {
+      "locked": {
+        "lastModified": 1794552581,
+        "narHash": "sha256-qXFIqA6FCcx7XeDzw0ZNlkDT9UiCzrNDwK8RuU8RcHM=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "f1e5c356f35d07e7b71a6b5e6c9338e0b029e0c0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-26.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "proxmox-nixos": {
+      "inputs": {
+        "flake-compat": "flake-compat",
+        "nixpkgs-libvncserver": "nixpkgs-libvncserver",
+        "nixpkgs-stable": "nixpkgs-stable",
+        "utils": "utils"
+      },
+      "locked": {
+        "lastModified": 1794809929,
+        "narHash": "sha256-2oA1uPtWC8TzV5ln6fbKI+4OdH9/l/sbCO5+srULnio=",
+        "owner": "SaumonNet",
+        "repo": "proxmox-nixos",
+        "rev": "e6c8ea3025cc0a64ec6fcb146dc27391fd527b08",
+        "type": "github"
+      },
+      "original": {
+        "owner": "SaumonNet",
+        "repo": "proxmox-nixos",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "disko": "disko",
         "flake-parts": "flake-parts",
         "import-tree": "import-tree",
         "nixpkgs": "nixpkgs",
+        "proxmox-nixos": "proxmox-nixos",
         "sops-nix": "sops-nix"
       }
     },
@@ -110,6 +179,39 @@
       "original": {
         "owner": "Mic92",
         "repo": "sops-nix",
+        "type": "github"
+      }
+    },
+    "systems": {
+      "locked": {
+        "lastModified": 1791244623,
+        "narHash": "sha256-uuanbkFk8a313Zfrxdcz8Us/yQtaxNnKJtX8v0ZPpd8=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "d36eeed142f88b5a636f2e3856a53c61654cf29b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "utils": {
+      "inputs": {
+        "systems": "systems"
+      },
+      "locked": {
+        "lastModified": 1794427683,
+        "narHash": "sha256-o7ey9gEilsxaifqJWnBDlYSKbNWYQYtKwDyXeZU2kaU=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "cd489559845d81f673a12885576016c65cbe9363",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
         "type": "github"
       }
     }

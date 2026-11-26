@@ -9,6 +9,8 @@
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     import-tree.url = "github:vic/import-tree";
+    # No nixpkgs follows: upstream supports only its own pinned nixpkgs.
+    proxmox-nixos.url = "github:SaumonNet/proxmox-nixos";
   };
 
   outputs =

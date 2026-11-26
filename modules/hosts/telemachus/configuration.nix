@@ -13,6 +13,7 @@
       immichBackdrop
       armRips
       peanut
+      proxmox
     ];
 
     networking.hostName = "telemachus";

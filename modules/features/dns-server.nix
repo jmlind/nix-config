@@ -10,6 +10,8 @@ let
     arm = { host = "homelab"; port = 8080; };
     backdrop = { host = "telemachus"; port = 2284; }; # immichBackdrop
     peanut = { host = "telemachus"; port = 8083; };
+    # pveproxy serves only HTTPS, with a self-signed cert.
+    proxmox = { host = "telemachus"; port = 8006; https = true; };
   };
 in
 {

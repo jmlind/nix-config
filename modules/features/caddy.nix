@@ -37,12 +37,24 @@
             let
               upstream =
                 if svc.host == config.networking.hostName then "localhost" else inputs.self.homelabHosts.${svc.host};
+              # `https = true` marks an upstream that serves only HTTPS with a
+              # self-signed cert (e.g. Proxmox); traffic stays on the LAN.
+              proxy =
+                if svc.https or false then
+                  ''
+                    reverse_proxy https://${upstream}:${toString svc.port} {
+                      transport http {
+                        tls_insecure_skip_verify
+                      }
+                    }''
+                else
+                  "reverse_proxy ${upstream}:${toString svc.port}";
             in
             lib.nameValuePair "${name}.${inputs.self.homelabDomain}" {
               extraConfig = ''
                 @lan remote_ip 192.168.1.0/24 127.0.0.1
                 handle @lan {
-                  reverse_proxy ${upstream}:${toString svc.port}
+                  ${proxy}
                 }
                 respond 403
               '';
